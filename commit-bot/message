@@ -1,0 +1,14 @@
+#!/usr/bin/python
+
+import sys
+from os.path import expanduser
+
+from twisted.python.log import startLogging
+
+from message import main
+
+if __name__ == '__main__':
+    if len(sys.argv) != 3:
+        raise SystemExit("Usage: %s <channel> <message>" % (sys.argv[0],))
+    startLogging(file(expanduser('~/.message.log'), 'a'))
+    main(*sys.argv[1:])
