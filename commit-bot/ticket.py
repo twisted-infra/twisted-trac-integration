@@ -1,12 +1,13 @@
 
-import urlparse
+import time, urlparse
 
 from twisted.internet import reactor, task
 from twisted.spread import pb
 from twisted.python import log
-from twisted.web import client
+from twisted.web import error, http
 
-import config
+import config, _http
+
 
 class Ticket(pb.Copyable, pb.RemoteCopy):
     def __init__(self, tracker, id, author, kind, component, subject):
@@ -23,12 +24,17 @@ class Ticket(pb.Copyable, pb.RemoteCopy):
             self.component, self.subject)
 pb.setUnjellyableForClass(Ticket, Ticket)
 
+
+
 class TicketChangeListener:
     """
     Mixin for a PB Referenceable which accepts ticket change notifications.
     """
     def remote_ticket(self, ticket):
+        log.msg(str(ticket))
         self.proto.ticket(ticket)
+
+
 
 class TicketChange:
     ticketMessageFormat = (
@@ -36,12 +42,17 @@ class TicketChange:
 
     def ticket(self, ticket):
         for (url, chan) in config.TICKET_RULES:
+            scheme, netloc, path, params, query, fragment = urlparse.urlparse(url)
+            if '@' in netloc:
+                netloc = netloc.split('@', 1)[1]
+            url = urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
             if ticket.tracker == url:
                 self.join(chan)
                 self.msg(
                     chan,
                     self.ticketMessageFormat % vars(ticket),
                     config.LINE_LENGTH)
+
 
 
 class TicketReview:
@@ -120,15 +131,68 @@ class TicketReview:
             "&order=priority")
         headers = {}
         scheme, netloc, url, params, query, fragment = urlparse.urlparse(location)
+        credentials = None
         if '@' in netloc:
             credentials, netloc = netloc.split('@', 1)
             location = urlparse.urlunparse((
                 scheme, netloc, url, params, query, fragment))
-            authorization = credentials.encode('base64').strip()
-            headers['Authorization'] = 'Basic ' + authorization
-        d = client.getPage(location, headers=headers)
-        d.addCallback(self._parseReviewTicketQuery)
-        return d
+        factory = _http.getPage(location, headers=headers)
+        if credentials is not None:
+            factory.deferred.addErrback(self._handleUnauthorized, factory, location, credentials)
+        factory.deferred.addCallback(self._parseReviewTicketQuery)
+        return factory.deferred
+
+
+    def _handleUnauthorized(self, err, factory, location, credentials):
+        """
+        Check failures to see if they are due to a 401 response and attempt to
+        authenticate if they are.
+        """
+        err.trap(error.Error)
+        if int(err.value.status) != http.UNAUTHORIZED:
+            return err
+
+        challenge = factory.response_headers.get('www-authenticate', [None])[0]
+        if challenge is None:
+            return err
+
+        challenge = dict(
+            _http.parseWWWAuthenticate(_http.tokenize([challenge])))
+
+        challenge = challenge.get('digest')
+        if challenge is None:
+            return err
+
+        scheme, netloc, url, params, query, fragment = urlparse.urlparse(location)
+        uri = urlparse.urlunparse((None, None, url, params, query, None))
+
+        response = challenge.get('response')
+        nonce = challenge.get('nonce')
+        cnonce = str(time.time())
+        nc = '00000001'
+        realm = challenge.get('realm')
+        algo = challenge.get('algorithm', 'md5').lower()
+        qop = challenge.get('qop', 'auth')
+
+        username, password = credentials.split(':')
+
+        response = _http.calcResponse(
+            _http.calcHA1(algo, username, realm, password, nonce, cnonce),
+            _http.calcHA2(algo, 'GET', uri, qop, None),
+            algo, nonce, nc, cnonce, qop)
+
+
+        challenge['username'] = username
+        challenge['uri'] = uri
+        challenge['response'] = response
+        challenge['cnonce'] = cnonce
+        challenge['nc'] = nc
+
+        headers = {
+            'authorization': 'Digest ' + ', '.join([
+                    '%s="%s"' % x for x in challenge.iteritems()])}
+        factory = _http.getPage(location, headers=headers)
+        return factory.deferred
 
 
     def _parseReviewTicketQuery(self, result):
@@ -151,7 +215,11 @@ class TicketReview:
         """
         tickets = self._formatTicketNumbers(reviewTicketInfo)
         self.join(channel)
-        self.msg(channel, "Tickets pending review: " + tickets)
+        if tickets:
+            message = "Tickets pending review: " + tickets
+        else:
+            message = "No tickets pending review!"
+        self.msg(channel, message)
 
 
     def _formatTicketNumbers(self, reviewTicketInfo):

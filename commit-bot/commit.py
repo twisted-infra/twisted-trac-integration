@@ -80,6 +80,7 @@ class RepositoryChangeListener:
     notifications.
     """
     def remote_change(self, repo, rev, author, msg, changes):
+        log.msg("change(%r, %r, %r, %r, %r)" % (repo, rev, author, msg, changes))
         self.proto.change(repo, rev, author, msg, changes)
 
 class RepositoryChange:
@@ -195,6 +196,30 @@ def _collectAndReport(repo, rev):
     d.addErrback(log.err)
     d.addCallback(lambda ign: reactor.stop())
 
+
+
+def _unblockAll():
+    import ctypes
+
+    SIG_SETMASK = 2
+
+    libc = ctypes.CDLL('libc.so.6')
+    sigprocmask = libc.sigprocmask
+    sigprocmask.restype = ctypes.c_int
+    sigprocmask.argtypes = [ctypes.c_int, ctypes.POINTER(ctypes.c_long), ctypes.POINTER(ctypes.c_long)]
+    new = ctypes.c_long(0)
+    old = ctypes.c_long(0)
+    print 'sigprocmask result:', sigprocmask(SIG_SETMASK, ctypes.pointer(new), ctypes.pointer(old))
+    print 'old signal mask was:', old
+
+
+
 def main(repo, rev):
+
+    # In case invoked from mod_dav_svn, fix the signal mask.  As far as I
+    # can tell, Apache blocks a crapload of stuff - most importantly SIGCHLD
+    # - and we inherit that, breaking us.
+    _unblockAll()
+
     reactor.callWhenRunning(_collectAndReport, repo, rev)
     reactor.run()

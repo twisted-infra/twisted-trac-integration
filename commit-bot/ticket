@@ -4,10 +4,12 @@ import sys, os
 
 from twisted.python import log
 
-import ticket
+import config, ticket
 
 if __name__ == '__main__':
     if len(sys.argv) != 7:
         raise SystemExit("Usage: %s <tracker url> <ticket id> <author> <kind> <component> <subject>" % (sys.argv[0],))
-    log.startLogging(file(os.path.expanduser('~/.ticket.log'), 'a'))
+    log.startLogging(
+        file(os.path.expanduser(
+            os.path.join(config.LOG_ROOT, '.ticket.log')), 'a'))
     ticket.main(*sys.argv[1:])

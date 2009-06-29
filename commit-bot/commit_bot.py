@@ -70,5 +70,5 @@ class CommitFactory(protocol.ReconnectingClientFactory):
 
 def main():
     cf = CommitFactory()
-    reactor.connectTCP(config.IRC_SERVER, 6667, cf)
+    reactor.connectTCP(config.IRC_SERVER, config.IRC_PORT, cf)
     reactor.run()

@@ -6,6 +6,7 @@ BOT_PORT = 15243
 
 # Hostname of the IRC server to which we will connect
 IRC_SERVER = 'irc.freenode.net'
+IRC_PORT = 6667
 
 # Nickname to use on that IRC server
 BOT_NICK = 'kenaan7'
@@ -31,3 +32,6 @@ TICKET_RULES = [
 
 # The channel to which to send alerts.
 ALERT_CHANNEL = '#bottest'
+
+# The directory in which log files will be written
+LOG_ROOT = '~'
