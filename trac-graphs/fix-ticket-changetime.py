@@ -3,6 +3,8 @@
 # ticket was modified and update the ticket table itself to reflect
 # this.
 
+# This doesn't work right yet I suspect. -exarkun
+
 import sys
 from os.path import exists
 
