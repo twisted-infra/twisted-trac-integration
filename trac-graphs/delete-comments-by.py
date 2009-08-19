@@ -6,23 +6,29 @@ from os.path import exists
 
 from pysqlite2.dbapi2 import connect
 
+def execute(cursor, statement, params=()):
+    # print statement, params
+    cursor.execute(statement, params)
+
+
 def main(dbfile, commenter):
     if not exists(dbfile):
         raise SystemExit("No such database: %r" % (dbfile,))
     conn = connect(dbfile)
     curs = conn.cursor()
-    curs.execute('SELECT ticket FROM ticket_change WHERE author = ?', (commenter,))
+    execute(curs, 'SELECT ticket FROM ticket_change WHERE author = ?', (commenter,))
     tickets = list(curs)
-    curs.execute('DELETE FROM ticket_change WHERE author = ?', (commenter,))
+    execute(curs, 'DELETE FROM ticket_change WHERE author = ?', (commenter,))
     for (id,) in tickets:
-        curs.execute('SELECT MAX(time) FROM ticket_change WHERE ticket = ?', (id,))
+        execute(curs, 'SELECT MAX(time) FROM ticket_change WHERE ticket = ?', (id,))
         results = list(curs.fetchall())
-        if len(results) == 0:
-            curs.execute('SELECT time FROM ticket WHERE id = ?', (id,))
+        if results[0][0] is None:
+            execute(curs, 'SELECT time FROM ticket WHERE id = ?', (id,))
             changetime = list(curs.fetchall())[0][0]
         else:
             changetime = results[0][0]
-        curs.execute(
+        execute(
+            curs,
             'UPDATE ticket SET changetime = ? WHERE id = ?', (changetime, id))
     conn.commit()
     conn.close()
