@@ -30,6 +30,11 @@ def main(dbfile, commenter):
         execute(
             curs,
             'UPDATE ticket SET changetime = ? WHERE id = ?', (changetime, id))
+
+    # Bonus round: delete their authentication token and session so they're signed out.
+    execute(curs, 'DELETE FROM auth_cookie WHERE name = ?', (commenter,))
+    execute(curs, 'DELETE FROM session WHERE sid = ?', (commenter,))
+
     conn.commit()
     conn.close()
 
