@@ -1,4 +1,6 @@
 
+from __future__ import division
+
 import time
 import datetime
 
@@ -87,11 +89,67 @@ def comments(cursor):
 
 
 
-class TimeSeries:
+class BaseSeries:
     def __init__(self, name, data):
         self.name = name
         self.data = data
 
+
+    def show(self, colorer):
+        from pylab import show, legend
+        self.plot(legend, colorer)
+        show()
+
+
+    def _computeChanges(self):
+        results = iter(self.data)
+        lastWhen, lastValue = results.next()
+        for when, value in results:
+            yield when, value - lastValue
+            lastValue = value
+
+
+    def changes(self):
+        return self.__class__(self.name + ' (changes)', self._computeChanges())
+
+
+    def _computePercentagized(self):
+        data = list(self.data)
+        y = [datum[1] for datum in data]
+        minY = min(y)
+        maxY = max(y)
+        diffY = maxY - minY
+        return [(x, ((y - minY) / diffY) * 100) for (x, y) in data]
+        
+
+    def percentagize(self):
+        return self.__class__(self.name + ' (%)', self._computePercentagized())
+
+
+
+class DeltaSeries(BaseSeries):
+    """
+    A time series which has changes in time as its x axis.  What's this
+    really supposed to be called?
+    """
+    def display(self):
+        for delta, count in self.data:
+            print delta.days, 'days', delta.seconds, 'seconds:', count
+
+
+    def plot(self, legend, colorer):
+        from pylab import plot, title, polyfit, polyval
+        when = []
+        what = []
+        for (a, b) in self.data:
+            when.append(a.days + a.seconds / (60 * 60 * 24))
+            what.append(b)
+        plot(when, what, colorer())
+        legend([self.name])
+        
+
+
+class TimeSeries(BaseSeries):
 
     def display(self):
         for date, count in self.data:
@@ -113,22 +171,6 @@ class TimeSeries:
         legend([self.name, self.name + " (best fit)"])
 
 
-    def show(self, colorer):
-        from pylab import show, legend
-        self.plot(legend, colorer)
-        show()
-
-    def _computeChanges(self):
-        results = iter(self.data)
-        lastWhen, lastValue = results.next()
-        for when, value in results:
-            yield when, value - lastValue
-            lastValue = value
-
-
-    def changes(self):
-        return TimeSeries(self.name + ' (changes)', self._computeChanges())
-
 
 class Frequencies(TimeSeries):
     def display(self):
@@ -144,6 +186,7 @@ class Frequencies(TimeSeries):
         plot = bar(range(len(values)), values, 1.0)
         xticks([x + 0.5 for x in range(len(labels))], labels)
         show()
+
 
 
 def colorer():
@@ -166,6 +209,8 @@ def driver(main, argv):
     results = main(cursor, *args)
     if 'changes' in flags:
         results = results.changes()
+    if 'percent' in flags:
+        results = results.percentagize()
     if 'plot' in flags:
         results.show(colorer().next)
     else:
