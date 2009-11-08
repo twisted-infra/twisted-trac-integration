@@ -113,7 +113,7 @@ parser.add_option('-s', '--siteurl', dest='url',
 
 ticket_prefix = '(?:#|(?:ticket|issue|bug)[: ]?)'
 ticket_reference = ticket_prefix + '[0-9]+'
-ticket_command =  (r'(?P<action>[A-Za-z]*).?'
+ticket_command =  (r'(?P<action>[A-Za-z]*):?.?'
                    '(?P<ticket>%s(?:(?:[, &]*|[ ]?and[ ]?)%s)*)' %
                    (ticket_reference, ticket_reference))
 
@@ -194,10 +194,9 @@ class CommitHook:
                 tn = TicketNotifyEmail(self.env)
                 tn.notify(ticket, newticket=0, modtime=self.now)
             except Exception, e:
-                # import traceback
-                # traceback.print_exc(file=sys.stderr)
-                print>>sys.stderr, 'Unexpected error while processing ticket ' \
-                                   'ID %s: %s' % (tkt_id, e)
+                print 'Unexpected error while processing ticket ID', tkt_id
+                exctype, value, tb = sys.exc_info()
+                traceback.print_exception(exctype, value, tb)
 
 
     def _cmdClose(self, ticket):
@@ -224,11 +223,20 @@ class CommitHook:
             branch = text
             branch.label = Branch
 
-            author = text
-            author.label = Author
+            branch_author = text
+            branch_author.label = Author
         """
         ticket['branch'] = self.branchPath
-        ticket['author'] = self.author
+        try:
+            ticket['branch_author']
+        except KeyError:
+            author = self.author
+        else:
+            authors = dict.fromkeys(filter(None, [
+                a.strip() for a in ticket['branch_author'].split(',')]))
+            authors[self.author] = None
+            author = ', '.join(authors.keys())
+        ticket['branch_author'] = author
 
 
     def _newBranchForTicket(self, change):
@@ -277,13 +285,13 @@ if __name__ == "__main__":
         print
         print "Note that the deprecated options will be removed in Trac 0.12."
     else:
-        for i in range(3):
+        for i in range(10):
             try:
                 CommitHook()
             except:
                 exctype, value, tb = sys.exc_info()
-                traceback.print_last()
-                time.sleep(3)
+                traceback.print_exception(exctype, value, tb)
+                time.sleep(i + 1)
             else:
                 break
         else:
