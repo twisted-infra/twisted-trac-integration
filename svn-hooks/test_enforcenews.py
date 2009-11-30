@@ -8,10 +8,13 @@ from enforcenews import getOutput, __file__ as hookFile
 
 
 def run(command):
-    pipe = subprocess.Popen(command, stdout=subprocess.PIPE)
+    pipe = subprocess.Popen(
+        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    stdout, stderr = pipe.communicate()
     code = pipe.wait()
     if code:
-        raise RuntimeError("%r exited with code %d" % (command, code))
+        raise RuntimeError(
+            "%r exited with code %d and stderr %s" % (command, code, stderr))
 
 
 class MainTests(TestCase):
@@ -28,6 +31,12 @@ class MainTests(TestCase):
 
     def commit(self, checkout, message):
         run(["svn", "commit", "-m", message, checkout.path])
+
+
+    def changed(self, revision):
+        return getOutput(
+            ["/usr/bin/svnlook", "changed", self.repository.path,
+             "--revision", str(revision)])
 
 
     def setUp(self):
@@ -67,6 +76,53 @@ class MainTests(TestCase):
         self.commit(branch, "Add some file.  Fixes: #1234")
 
         # It should exist.
-        changed = getOutput(
-            ["/usr/bin/svnlook", "changed", self.repository.path, "--revision", "2"])
-        print changed
+        changed = self.changed(3)
+        self.assertSubstring("A   branches/some-branch/some-file", changed)
+
+
+    def test_tagCommit(self):
+        """
+        Tag commits are not required to do anything in particular.
+        """
+        # Copy trunk to a tag
+        tag = self.tags.child("some-tag")
+        run(["svn", "cp", self.trunk.path, tag.path])
+        self.commit(self.tags, "Create some tag")
+
+        # It should exist.
+        changed = self.changed(2)
+        self.assertSubstring("A   tags/some-tag/", changed)
+
+
+    def test_trunkCommitWithoutNews(self):
+        """
+        Committing to trunk with a I{Fixes} tag but without adding a ticket
+        file to the topfiles directory results in a rejection from the
+        pre-commit hook.
+        """
+        # Toss a file with the wrong ticket number in it into trunk.
+        topfiles = self.trunk.child("topfiles")
+        topfiles.makedirs()
+        feature = topfiles.child("123.feature")
+        feature.setContent("hello")
+        self.add(topfiles)
+        self.assertRaises(
+            RuntimeError,
+            self.commit, self.trunk, "Add some junk.  Fixes: #321")
+
+
+    def test_trunkCommitWithNews(self):
+        """
+        Committing to trunk with a I{Fixes} tag is allowed if a corresponding
+        file is added to the topfiles directory.
+        """
+        topfiles = self.trunk.child("topfiles")
+        topfiles.makedirs()
+        feature = topfiles.child("123.feature")
+        feature.setContent("hello")
+        self.add(topfiles)
+        self.commit(self.trunk, "Add some junk.  Fixes: #123")
+
+        # It should exist.
+        changed = self.changed(2)
+        self.assertSubstring("A   trunk/topfiles/123.feature", changed)

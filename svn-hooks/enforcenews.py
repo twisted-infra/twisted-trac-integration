@@ -80,7 +80,8 @@ def main():
                     break
             else:
                 raise SystemExit(
-                    "Must add a .{feature,bugfix,removal,misc} file for resolved tickets")
+                    "Must add a <ticket>.{feature,bugfix,removal,misc} file "
+                    "for resolved tickets")
         for ticket in reopens:
             required = fileSetForTicket(ticket)
             for change in deletedTopfiles:
@@ -89,7 +90,8 @@ def main():
                     break
             else:
                 raise SystemExit(
-                    "Must remove a .{feature,bugfix,removal,misc} file for re-opened tickets")
+                    "Must remove a <ticket>.{feature,bugfix,removal,misc} "
+                    "file for re-opened tickets")
 
 
 
