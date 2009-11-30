@@ -75,23 +75,23 @@ def main():
         for ticket in fixes:
             required = fileSetForTicket(ticket)
             for change in addedTopfiles:
-                print change.path[-1], required
                 if change.path[-1] in required:
                     break
             else:
                 raise SystemExit(
                     "Must add a <ticket>.{feature,bugfix,removal,misc} file "
-                    "for resolved tickets")
+                    "for resolved tickets.  For further details, refer to "
+                    " http://twistedmatrix.com/trac/wiki/ReviewProcess")
         for ticket in reopens:
             required = fileSetForTicket(ticket)
             for change in deletedTopfiles:
-                print change.path[-1], required
                 if change.path[-1] in required:
                     break
             else:
                 raise SystemExit(
                     "Must remove a <ticket>.{feature,bugfix,removal,misc} "
-                    "file for re-opened tickets")
+                    "file for re-opened tickets.  For further details, refer "
+                    "to http://twistedmatrix.com/trac/wiki/ReviewProcess")
 
 
 
