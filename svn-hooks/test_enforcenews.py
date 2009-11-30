@@ -126,3 +126,41 @@ class MainTests(TestCase):
         # It should exist.
         changed = self.changed(2)
         self.assertSubstring("A   trunk/topfiles/123.feature", changed)
+
+
+    def test_trunkRevertWithNews(self):
+        """
+        Reverting a previous trunk commit with a changelog message which uses
+        I{Reopens} is required to remove the corresponding topfiles entry.
+        """
+        # First add something to revert.
+        topfiles = self.trunk.child("topfiles")
+        topfiles.makedirs()
+        feature = topfiles.child("123.feature")
+        feature.setContent("hello")
+        self.add(topfiles)
+        self.commit(self.trunk, "Add some junk.  Fixes: #123")
+
+        # Now revert it.  More or less.
+        run(["svn", "rm", feature.path])
+        self.commit(self.trunk, "Revert some junk.  Reopens: #123")
+
+
+    def test_trunkRevertWithoutNews(self):
+        """
+        If a I{Reopens} tag is used but no corresponding file is removed from
+        topfiles, the commit is rejected.
+        """
+        # First add something to revert.
+        topfiles = self.trunk.child("topfiles")
+        topfiles.makedirs()
+        feature = topfiles.child("123.feature")
+        feature.setContent("hello")
+        self.add(topfiles)
+        self.commit(self.trunk, "Add some junk.  Fixes: #123")
+
+        # Now revert it without removing the file.
+        feature.setContent("goodbye")
+        self.assertRaises(
+            RuntimeError,
+            self.commit, self.trunk, "Revert some junk.  Reopens: #123")
