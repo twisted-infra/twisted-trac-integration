@@ -1,5 +1,8 @@
 #!/usr/bin/python
 
+# This file is maintained in revision control as part of
+# lp:twisted-trac-integration.  Do not edit the deployed copy.
+
 import re, sys, subprocess
 
 def getOutput(command):
