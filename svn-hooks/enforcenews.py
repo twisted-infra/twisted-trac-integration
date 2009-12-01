@@ -90,7 +90,7 @@ def main():
             for change in deletedTopfiles:
                 if change.path[-1] in required:
                     break
-            else:  
+            else:
                 raise SystemExit(
                     "Must remove a <ticket>.{feature,bugfix,removal,misc} "
                     "file for re-opened tickets.  For further details, refer to "
