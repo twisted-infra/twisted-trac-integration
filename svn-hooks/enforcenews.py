@@ -84,17 +84,17 @@ def main():
                 raise SystemExit(
                     "Must add a <ticket>.{feature,bugfix,removal,misc} file "
                     "for resolved tickets.  For further details, refer to "
-                    " http://twistedmatrix.com/trac/wiki/ReviewProcess")
+                    "http://twistedmatrix.com/trac/wiki/ReviewProcess#Newsfiles")
         for ticket in reopens:
             required = fileSetForTicket(ticket)
             for change in deletedTopfiles:
                 if change.path[-1] in required:
                     break
-            else:
+            else:  
                 raise SystemExit(
                     "Must remove a <ticket>.{feature,bugfix,removal,misc} "
-                    "file for re-opened tickets.  For further details, refer "
-                    "to http://twistedmatrix.com/trac/wiki/ReviewProcess")
+                    "file for re-opened tickets.  For further details, refer to "
+                    "http://twistedmatrix.com/trac/wiki/ReviewProcess#Newsfiles")
 
 
 
