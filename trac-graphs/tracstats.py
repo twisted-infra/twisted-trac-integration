@@ -21,7 +21,7 @@ def allChanges(cursor, id):
     """
     statement = ("select time, author, field, oldvalue, newvalue "
                  "from ticket_change "
-                 "where ticket = ? "
+                 "where ticket = %s "
                  "order by time asc")
     cursor.execute(statement, (id,))
     return [
