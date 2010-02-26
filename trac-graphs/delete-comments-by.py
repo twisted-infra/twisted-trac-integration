@@ -2,19 +2,16 @@
 # Delete all trac ticket comments made by a particular user
 
 import sys
-from os.path import exists
 
-from pysqlite2.dbapi2 import connect
+from psycopg2 import connect
 
 def execute(cursor, statement, params=()):
     # print statement, params
     cursor.execute(statement, params)
 
 
-def main(dbfile, commenter):
-    if not exists(dbfile):
-        raise SystemExit("No such database: %r" % (dbfile,))
-    conn = connect(dbfile)
+def main(dbargs, commenter):
+    conn = connect(dbargs)
     curs = conn.cursor()
     execute(curs, 'SELECT ticket FROM ticket_change WHERE author = ?', (commenter,))
     tickets = list(curs)

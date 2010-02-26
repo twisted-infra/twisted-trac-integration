@@ -4,10 +4,8 @@ from __future__ import division
 import time
 import datetime
 
-try:
-    from pysqlite2.dbapi2 import connect
-except ImportError:
-    from sqlite3 import connect
+from psycopg2 import connect
+
 
 def udict(**kw):
     return dict([
@@ -138,7 +136,7 @@ class DeltaSeries(BaseSeries):
 
 
     def plot(self, legend, colorer):
-        from pylab import plot, title, polyfit, polyval
+        from pylab import plot
         when = []
         what = []
         for (a, b) in self.data:
@@ -157,7 +155,7 @@ class TimeSeries(BaseSeries):
 
 
     def plot(self, legend, colorer):
-        from pylab import plot, title, polyfit, polyval
+        from pylab import plot, polyfit, polyval
         when = []
         when2 = []
         what = []
@@ -203,8 +201,8 @@ def driver(main, argv):
             flags[a[2:]] = True
         else:
             args.append(a)
-    dbfilename = args.pop(0)
-    connection = connect(dbfilename)
+    dbargs = args.pop(0)
+    connection = connect(dbargs)
     cursor = connection.cursor()
     results = main(cursor, *args)
     if 'changes' in flags:

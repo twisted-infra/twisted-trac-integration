@@ -6,19 +6,16 @@
 # This doesn't work right yet I suspect. -exarkun
 
 import sys
-from os.path import exists
 
-from pysqlite2.dbapi2 import connect
+from psycopg2 import connect
 
 def execute(cursor, statement, params=()):
 #    print statement, params
     cursor.execute(statement, params)
 
 
-def main(dbfile):
-    if not exists(dbfile):
-        raise SystemExit("No such database: %r" % (dbfile,))
-    conn = connect(dbfile)
+def main(dbargs):
+    conn = connect(dbargs)
     curs = conn.cursor()
     execute(curs, 'SELECT id, time, changetime FROM ticket')
     tickets = list(curs)
@@ -32,7 +29,7 @@ def main(dbfile):
         # if lastAttachment is None:
         #     lastAttachment = time
         if lastChange != changetime:
-            print id, time, lastChangeTime
+            print id, time, lastChange
 #            execute(
 #                curs, 'UPDATE ticket SET changetime = ? WHERE id = ?',
 #                (lastChangeTime, id))
