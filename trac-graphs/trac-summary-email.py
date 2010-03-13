@@ -3,7 +3,7 @@ import tempfile
 import sys, time, datetime, random, StringIO
 import email.Message, email.Generator, email.Utils
 
-import pysqlite2.dbapi2 as sqlite
+import psycopg2
 
 import gdchart
 
@@ -624,7 +624,7 @@ def report(from_, to, contentType, body):
 
 
 def main(db, from_, to, start=None, end=None):
-    conn = sqlite.connect(db)
+    conn = psycopg2.connect(db)
     curs = conn.cursor()
 
     if start is None and end is None:
@@ -647,4 +647,4 @@ if __name__ == '__main__':
     elif len(sys.argv) == 6:
         main(sys.argv[1], sys.argv[2], sys.argv[3], datetime.datetime(*map(int, sys.argv[4].split('-'))), datetime.datetime(*map(int, sys.argv[5].split('-'))))
     else:
-        raise SystemExit("Usage: %s <path to trac.db> <from address> <to address> [<start date> <end date>]" % (sys.argv[0],))
+        raise SystemExit("Usage: %s <postgres connection> <from address> <to address> [<start date> <end date>]" % (sys.argv[0],))
