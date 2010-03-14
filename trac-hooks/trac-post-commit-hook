@@ -76,7 +76,7 @@
 
 import re
 import sys
-import time
+from datetime import datetime
 import traceback
 
 from trac.env import open_environment
@@ -85,6 +85,7 @@ from trac.ticket import Ticket
 from trac.ticket.web_ui import TicketModule
 # TODO: move grouped_changelog_entries to model.py
 from trac.versioncontrol.api import NoSuchChangeset
+from trac.util.datefmt import utc
 
 from optparse import OptionParser
 
@@ -155,7 +156,7 @@ class CommitHook:
         self.author = chgset.author
         self.rev = rev
         self.msg = "(In [%s]) %s" % (rev, chgset.message)
-        self.now = time.time()
+        self.now = datetime.now(utc)
 
         tickets = {}
 
