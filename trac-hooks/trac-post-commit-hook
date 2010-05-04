@@ -76,6 +76,7 @@
 
 import re
 import sys
+import time
 from datetime import datetime
 import traceback
 
@@ -194,7 +195,7 @@ class CommitHook:
 
                 tn = TicketNotifyEmail(self.env)
                 tn.notify(ticket, newticket=0, modtime=self.now)
-            except Exception, e:
+            except Exception:
                 print 'Unexpected error while processing ticket ID', tkt_id
                 exctype, value, tb = sys.exc_info()
                 traceback.print_exception(exctype, value, tb)
