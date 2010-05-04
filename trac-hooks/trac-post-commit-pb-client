@@ -1,17 +1,22 @@
-from __future__ import nested_scopes
+#!/usr/bin/python
 
 import sys
 
 from twisted.spread import pb
 from twisted.internet import reactor, defer
+from twisted.python.log import startLogging, err
 
-tracCommitServer = 'twistedmatrix.com'
-tracCommitServerPort = 38159
+startLogging(sys.stdout)
 
-def postCommit(revision, author, log):
+def postCommit(revision, author, log, host, port):
+    """
+    Connect to the PB server at C{host}:C{port} and call its
+    C{postCommit} method with the given C{revision}, C{author}, and
+    C{log} information.
+    """
     cf = pb.PBClientFactory()
     d = cf.getRootObject()
-    reactor.connectTCP(tracCommitServer, tracCommitServerPort, cf)
+    reactor.connectTCP(host, port, cf)
     def gotRoot(root):
         return root.callRemote('postCommit', revision, author, log)
     d.addCallback(gotRoot)
@@ -20,5 +25,9 @@ def postCommit(revision, author, log):
     d.addCallback(gotResult)
     return d
 
-postCommit(int(sys.argv[1]), sys.argv[2], sys.argv[3]).addBoth(lambda ign: reactor.stop())
+d = postCommit(
+	int(sys.argv[1]), sys.argv[2], sys.argv[3],
+	sys.argv[4], int(sys.argv[5]))
+d.addErrback(err)
+d.addBoth(lambda ign: reactor.stop())
 reactor.run()
