@@ -233,8 +233,11 @@ class CommitHook:
         except KeyError:
             author = self.author
         else:
+            branch_author = ticket['branch_author']
+            if branch_author is None:
+                branch_author = ''
             authors = dict.fromkeys(filter(None, [
-                a.strip() for a in ticket['branch_author'].split(',')]))
+                a.strip() for a in branch_author.split(',')]))
             authors[self.author] = None
             author = ', '.join(authors.keys())
         ticket['branch_author'] = author
