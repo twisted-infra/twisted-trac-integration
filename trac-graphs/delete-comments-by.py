@@ -2,38 +2,35 @@
 # Delete all trac ticket comments made by a particular user
 
 import sys
-from os.path import exists
 
-from pysqlite2.dbapi2 import connect
+from psycopg2 import connect
 
 def execute(cursor, statement, params=()):
     # print statement, params
     cursor.execute(statement, params)
 
 
-def main(dbfile, commenter):
-    if not exists(dbfile):
-        raise SystemExit("No such database: %r" % (dbfile,))
-    conn = connect(dbfile)
+def main(dbargs, commenter):
+    conn = connect(dbargs)
     curs = conn.cursor()
-    execute(curs, 'SELECT ticket FROM ticket_change WHERE author = ?', (commenter,))
+    execute(curs, 'SELECT ticket FROM ticket_change WHERE author = %s', (commenter,))
     tickets = list(curs)
-    execute(curs, 'DELETE FROM ticket_change WHERE author = ?', (commenter,))
+    execute(curs, 'DELETE FROM ticket_change WHERE author = %s', (commenter,))
     for (id,) in tickets:
-        execute(curs, 'SELECT MAX(time) FROM ticket_change WHERE ticket = ?', (id,))
+        execute(curs, 'SELECT MAX(time) FROM ticket_change WHERE ticket = %s', (id,))
         results = list(curs.fetchall())
         if results[0][0] is None:
-            execute(curs, 'SELECT time FROM ticket WHERE id = ?', (id,))
+            execute(curs, 'SELECT time FROM ticket WHERE id = %s', (id,))
             changetime = list(curs.fetchall())[0][0]
         else:
             changetime = results[0][0]
         execute(
             curs,
-            'UPDATE ticket SET changetime = ? WHERE id = ?', (changetime, id))
+            'UPDATE ticket SET changetime = %s WHERE id = %s', (changetime, id))
 
     # Bonus round: delete their authentication token and session so they're signed out.
-    execute(curs, 'DELETE FROM auth_cookie WHERE name = ?', (commenter,))
-    execute(curs, 'DELETE FROM session WHERE sid = ?', (commenter,))
+    execute(curs, 'DELETE FROM auth_cookie WHERE name = %s', (commenter,))
+    execute(curs, 'DELETE FROM session WHERE sid = %s', (commenter,))
 
     conn.commit()
     conn.close()

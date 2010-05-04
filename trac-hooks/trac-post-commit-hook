@@ -77,6 +77,7 @@
 import re
 import sys
 import time
+from datetime import datetime
 import traceback
 
 from trac.env import open_environment
@@ -85,6 +86,7 @@ from trac.ticket import Ticket
 from trac.ticket.web_ui import TicketModule
 # TODO: move grouped_changelog_entries to model.py
 from trac.versioncontrol.api import NoSuchChangeset
+from trac.util.datefmt import utc
 
 from optparse import OptionParser
 
@@ -155,7 +157,7 @@ class CommitHook:
         self.author = chgset.author
         self.rev = rev
         self.msg = "(In [%s]) %s" % (rev, chgset.message)
-        self.now = time.time()
+        self.now = datetime.now(utc)
 
         tickets = {}
 
@@ -193,7 +195,7 @@ class CommitHook:
 
                 tn = TicketNotifyEmail(self.env)
                 tn.notify(ticket, newticket=0, modtime=self.now)
-            except Exception, e:
+            except Exception:
                 print 'Unexpected error while processing ticket ID', tkt_id
                 exctype, value, tb = sys.exc_info()
                 traceback.print_exception(exctype, value, tb)
@@ -232,8 +234,11 @@ class CommitHook:
         except KeyError:
             author = self.author
         else:
+            branch_author = ticket['branch_author']
+            if branch_author is None:
+                branch_author = ''
             authors = dict.fromkeys(filter(None, [
-                a.strip() for a in ticket['branch_author'].split(',')]))
+                a.strip() for a in branch_author.split(',')]))
             authors[self.author] = None
             author = ', '.join(authors.keys())
         ticket['branch_author'] = author

@@ -1,7 +1,7 @@
 
 import sys
 
-from datetime import datetime, timedelta
+from datetime import timedelta
 
 import tracstats
 

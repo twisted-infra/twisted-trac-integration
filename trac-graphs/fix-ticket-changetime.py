@@ -6,35 +6,32 @@
 # This doesn't work right yet I suspect. -exarkun
 
 import sys
-from os.path import exists
 
-from pysqlite2.dbapi2 import connect
+from psycopg2 import connect
 
 def execute(cursor, statement, params=()):
 #    print statement, params
     cursor.execute(statement, params)
 
 
-def main(dbfile):
-    if not exists(dbfile):
-        raise SystemExit("No such database: %r" % (dbfile,))
-    conn = connect(dbfile)
+def main(dbargs):
+    conn = connect(dbargs)
     curs = conn.cursor()
     execute(curs, 'SELECT id, time, changetime FROM ticket')
     tickets = list(curs)
     for (id, time, changetime) in tickets:
-        execute(curs, 'SELECT MAX(time) FROM ticket_change WHERE ticket = ?', (id,))
+        execute(curs, 'SELECT MAX(time) FROM ticket_change WHERE ticket = %s', (id,))
         lastChange = list(curs.fetchall())[0][0]
-        # execute(curs, 'SELECT MAX(time) FROM attachment WHERE id = ?', (id,))
+        # execute(curs, 'SELECT MAX(time) FROM attachment WHERE id = %s', (id,))
         # lastAttachment = list(curs.fetchall())[0][0]
         if lastChange is None:
             lastChange = time
         # if lastAttachment is None:
         #     lastAttachment = time
         if lastChange != changetime:
-            print id, time, lastChangeTime
+            print id, time, lastChange
 #            execute(
-#                curs, 'UPDATE ticket SET changetime = ? WHERE id = ?',
+#                curs, 'UPDATE ticket SET changetime = %s WHERE id = %s',
 #                (lastChangeTime, id))
     conn.commit()
     conn.close()
