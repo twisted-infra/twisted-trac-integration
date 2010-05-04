@@ -39,7 +39,7 @@
 /**
  * The rsync destination location.
  */
-#define DEST      "trac@twistedmatrix.com:svn"
+#define DEST      "trac-migration@twistedmatrix.com:svn"
 
 /**
  * Could not format the first rsync command with the available buffer space.
@@ -100,7 +100,7 @@ int main(int argc, char** argv) {
 	wrote = snprintf(
 		rsync,
 		sizeof rsync,
-		"%s -e \"%s -vvvv -i %s\" -avz --delete --exclude db/current "
+		"%s -e \"%s -i %s\" -avz --delete --exclude db/current "
 		"--exclude db/transactions/ \"%s\" \"%s/\"",
 		RSYNC, SSH, KEY, REPO, DEST);
 	if (wrote >= sizeof rsync) {
@@ -115,7 +115,7 @@ int main(int argc, char** argv) {
 	wrote = snprintf(
 		rsync,
 		sizeof rsync,
-		"%s -e \"%s -vvvv -i %s\" -avz --delete --exclude db/transactions/ "
+		"%s -e \"%s -i %s\" -avz --delete --exclude db/transactions/ "
 		"\"%s/db/current\" \"%s/Twisted/db/\"",
 		RSYNC, SSH, KEY, REPO, DEST);
 
