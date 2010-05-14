@@ -1,3 +1,4 @@
+from csv import reader
 
 from twisted.python.log import err
 from twisted.internet.defer import deferredGenerator, waitForDeferred
@@ -41,12 +42,10 @@ def closedTicket(trackerLocation, ticket):
     which will fire with C{True} if the ticket is closed, C{False} otherwise.
     """
     def examineStatus(result):
-        header, data = result.splitlines()
-        header = header.split('\t')
-        data = data.split('\t')
+        header, row = reader(result.splitlines(), delimiter='\t')
         status = header.index('status')
-        print 'Status of', ticket, 'is', data[status]
-        return data[status] == 'closed'
+        print 'Status of', ticket, 'is', row[status]
+        return row[status] == 'closed'
 
     if not trackerLocation.endswith('/'):
         trackerLocation += '/'
