@@ -4,7 +4,7 @@ import subprocess
 from twisted.python.filepath import FilePath
 from twisted.trial.unittest import TestCase
 
-from enforcenews import getOutput, __file__ as hookFile
+from enforcenews import getOutput, __file__ as hookFile, fileSetForTicket
 
 
 def run(command):
@@ -164,3 +164,19 @@ class MainTests(TestCase):
         self.assertRaises(
             RuntimeError,
             self.commit, self.trunk, "Revert some junk.  Reopens: #123")
+
+
+
+class OtherTests(TestCase):
+    """
+    Tests for other code in L{enforcenews}.
+    """
+    def test_fileSetForTicket(self):
+        """
+        L{fileSetForTicket} returns a C{set} with a name for each possible
+        fragment type for the ticket passed to it.
+        """
+        self.assertEquals(
+            fileSetForTicket(1234),
+            set(["1234.feature", "1234.bugfix", "1234.doc",
+                 "1234.removal", "1234.misc"]))

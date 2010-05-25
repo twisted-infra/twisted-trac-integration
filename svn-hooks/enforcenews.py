@@ -10,13 +10,13 @@ def getOutput(command):
     stdout = pipe.communicate()[0]
     return stdout
 
+_fragmentTypes = ['feature', 'bugfix', 'doc', 'removal', 'misc']
+_fragmentSuggestion = "<ticket>.{" + ",".join(_fragmentTypes) + "}"
 
 def fileSetForTicket(ticket):
     options = set()
-    options.add(ticket + '.feature')
-    options.add(ticket + '.bugfix')
-    options.add(ticket + '.removal')
-    options.add(ticket + '.misc')
+    for type in _fragmentTypes:
+        options.add('%d.%s' % (int(ticket), type))
     return options
 
 
@@ -82,8 +82,9 @@ def main():
                     break
             else:
                 raise SystemExit(
-                    "Must add a <ticket>.{feature,bugfix,removal,misc} file "
-                    "for resolved tickets.  For further details, refer to "
+                    "Must add a " + _fragmentSuggestion + " " +
+                    "file for resolved tickets.  For further details, refer "
+                    "to "
                     "http://twistedmatrix.com/trac/wiki/ReviewProcess#Newsfiles")
         for ticket in reopens:
             required = fileSetForTicket(ticket)
@@ -92,7 +93,7 @@ def main():
                     break
             else:
                 raise SystemExit(
-                    "Must remove a <ticket>.{feature,bugfix,removal,misc} "
+                    "Must remove a " + _fragmentSuggestion + " " +
                     "file for re-opened tickets.  For further details, refer to "
                     "http://twistedmatrix.com/trac/wiki/ReviewProcess#Newsfiles")
 
