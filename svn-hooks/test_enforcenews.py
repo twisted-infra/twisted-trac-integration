@@ -1,65 +1,26 @@
 
-import subprocess
-
 from twisted.python.filepath import FilePath
 from twisted.trial.unittest import TestCase
 
-from enforcenews import getOutput, __file__ as hookFile, fileSetForTicket
+from testlib import SubversionMixin, run
+from enforcenews import __file__ as hookFile, fileSetForTicket
 
 
-def run(command):
-    pipe = subprocess.Popen(
-        command, stdout=subprocess.PIPE, stderr=subprocess.PIPE)
-    stdout, stderr = pipe.communicate()
-    code = pipe.wait()
-    if code:
-        raise RuntimeError(
-            "%r exited with code %d and stderr %s" % (command, code, stderr))
-
-
-class MainTests(TestCase):
+class MainTests(TestCase, SubversionMixin):
     """
     Tests for the main function in L{enforcenews}.
     """
-    def fileURI(self, path):
-        return 'file://' + path
-
-
-    def add(self, *paths):
-        run(["svn", "add"] + [p.path for p in paths])
-
-
-    def commit(self, checkout, message):
-        run(["svn", "commit", "-m", message, checkout.path])
-
-
-    def changed(self, revision):
-        return getOutput(
-            ["/usr/bin/svnlook", "changed", self.repository.path,
-             "--revision", str(revision)])
-
-
     def setUp(self):
         """
-        Create a minimal svn repository which the hook can be tested against
+        Create a minimal svn repository which the hook can be tested against.
         """
         self.repository = FilePath(self.mktemp())
         self.checkout = FilePath(self.mktemp())
-        run(["svnadmin", "create", self.repository.path])
-        run(["svn", "checkout", self.fileURI(self.repository.path), self.checkout.path])
+        self.standardRepository(self.repository, self.checkout)
         self.trunk = self.checkout.child("trunk")
-        self.trunk.makedirs()
         self.branches = self.checkout.child("branches")
-        self.branches.makedirs()
         self.tags = self.checkout.child("tags")
-        self.tags.makedirs()
-        self.add(self.trunk, self.branches, self.tags)
-        self.commit(self.checkout, "Initial repository structure")
-
-        # Install the hook
-        self.hook = self.repository.child("hooks").child("pre-commit")
-        FilePath(hookFile).copyTo(self.hook)
-        self.hook.chmod(0700)
+        self.installHook(self.repository, hookFile)
 
 
     def test_branchCommit(self):

@@ -33,6 +33,11 @@ class Change(object):
         return len(self.path) >= 2 and self.path[-2] == 'topfiles'
 
 
+    def __repr__(self):
+        return '%s(%s)' % (self.__class__.__name__, self.path)
+
+
+
 class Add(Change):
     pass
 
@@ -51,16 +56,22 @@ changeTypes = {
     'M': Modify,
     }
 
+
+def iterchanges(changed):
+    for line in changed.splitlines():
+        type = line[0]
+        name = line[4:].split('/')
+        change = changeTypes.get(type, Change)(name)
+        yield change
+
+
 def main():
     root, transaction = sys.argv[1:]
     changed = getOutput(['/usr/bin/svnlook', 'changed', root, '--transaction', transaction])
     addedTopfiles = set()
     deletedTopfiles = set()
     trunkChanged = False
-    for line in changed.splitlines():
-        type = line[0]
-        name = line[4:].split('/')
-        change = changeTypes.get(type, Change)(name)
+    for change in iterchanges(changed):
         if change.isTrunk():
             trunkChanged = True
             if change.isTopfile():
