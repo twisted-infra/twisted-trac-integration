@@ -1,11 +1,12 @@
 import socket, os
 
+from twisted.python import log
 from twisted.spread import pb
 from twisted.internet import utils
 
 wolfwood = socket.gethostbyname('svn.twistedmatrix.com')
-postCommitHook = '/home/trac/Projects/trac/trunk/contrib/trac-post-commit-hook'
-tracEnvPath = '/home/trac/projects/trac/'
+postCommitHook = '/home/trac-migration/Run/trac/trac-post-commit-hook'
+tracEnvPath = '/home/trac-migration/Run/trac/trac-projects/twisted/'
 tracURL = 'http://twistedmatrix.com/trac/'
 
 tracCommitServerPort = 38159
@@ -17,14 +18,23 @@ class TracPostCommitPbServerRoot(pb.Root):
         self.tracURL = tracURL
 
 
-    def remote_postCommit(self, revision, author, log):
-        return utils.getProcessOutput(
+    def remote_postCommit(self, revision, author, msg):
+        log.msg("postCommit(revision=%r)" % (revision,))
+        result = utils.getProcessOutput(
             postCommitHook, ['-p', tracEnvPath,
                              '-r', str(revision),
                              '-u', author,
-                             '-m', log,
+                             '-m', msg,
                              '-s', tracURL],
             errortoo=True, env=os.environ)
+        def hooked(result):
+            log.msg("hook completed: %r" % (result,))
+            return result
+        def failed(reason):
+            log.err(reason, "hook failed")
+            return reason
+        result.addCallbacks(hooked, failed)
+        return result
 
 
 
