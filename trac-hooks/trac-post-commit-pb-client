@@ -21,8 +21,8 @@ def postCommit(revision, author, log, host, port):
         return root.callRemote('postCommit', revision, author, log)
     d.addCallback(gotRoot)
     def gotResult(result):
-        print result
-    d.addCallback(gotResult)
+        print "postCommit result", result
+    d.addBoth(gotResult)
     return d
 
 d = postCommit(
