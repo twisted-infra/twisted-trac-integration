@@ -3,7 +3,7 @@ import tempfile
 import sys, time, datetime, random, StringIO
 import email.Message, email.Generator, email.Utils
 
-import psycopg2
+import psycopg2.extensions
 
 import gdchart
 
@@ -626,6 +626,8 @@ def report(from_, to, contentType, body):
 def main(db, from_, to, start=None, end=None):
     conn = psycopg2.connect(db)
     curs = conn.cursor()
+    # Make text come back as unicode
+    psycopg2.extensions.register_type(psycopg2.extensions.UNICODE, curs)
 
     if start is None and end is None:
         start, end = period()
