@@ -393,11 +393,52 @@ def summarize(start, end, tickets, changes):
     # Not strictly correct with respect to the interval.
     totalOpenBugCount = len([t for t in tickets.itervalues() if t[u'status'] != u'closed'])
 
+    totalOpenEnhancementCount = len([
+            t for t in tickets.itervalues() 
+            if t[u'status'] != u'closed' and t[u'type'] == u'enhancement'])
+
+    totalOpenDefectCount = len([
+            t for t in tickets.itervalues() 
+            if t[u'status'] != u'closed' and t[u'type'] == u'defect'])
+
+    totalOpenTaskCount = len([
+            t for t in tickets.itervalues() 
+            if t[u'status'] != u'closed' and t[u'type'] == u'task'])
+
+    totalOpenRegressionCount = len([
+            t for t in tickets.itervalues() 
+            if t[u'status'] != u'closed' and t[u'type'] == u'regression'])
+
+    enhancementsOpened = []
+    defectsOpened = []
+    tasksOpened = []
+    regressionsOpened = []
+
+    openedByType = {
+        'enhancement': enhancementsOpened,
+        'defect': defectsOpened,
+        'task': tasksOpened,
+        'regression': regressionsOpened,
+        }
+
+    enhancementsClosed = []
+    defectsClosed = []
+    tasksClosed = []
+    regressionsClosed = []
+    
+    closedByType = {
+        'enhancement': enhancementsClosed,
+        'defect': defectsClosed,
+        'task': tasksClosed,
+        'regression': regressionsClosed,
+        }
+
     bugsClosed = []
     bugsOpened = []
     for t in tickets.itervalues():
         if start <= t[u'time'] < end:
             bugsOpened.append(t)
+            openedByType[t[u'type']].append(t)
             moreOf(typeChanges, t[u'type'])
             moreOf(priorityChanges, t[u'priority'])
             moreOf(componentChanges, t[u'component'])
@@ -407,10 +448,12 @@ def summarize(start, end, tickets, changes):
         if change[u'field'] == u'status':
             if change[u'old'] != u'closed' and change[u'new'] == u'closed':
                 accumulator = bugsClosed
+                typeAccumulator = closedByType[tkt[u'type']]
                 modifier = lessOf
                 tkt[u'closer'] = change[u'author']
             elif change[u'old'] == u'closed' and change[u'new'] != u'closed':
                 accumulator = bugsOpened
+                typeAccumulator = openedByType[tkt[u'type']]
                 modifier = moreOf
             else:
                 continue
@@ -418,6 +461,7 @@ def summarize(start, end, tickets, changes):
             modifier(priorityChanges, tkt[u'priority'])
             modifier(componentChanges, tkt[u'component'])
             accumulator.append(tkt)
+            typeAccumulator.append(tkt)
 
     oldestTicket = describeOldestTicket(tickets)
     youngestTicket = describeYoungestTicket(tickets)
@@ -428,7 +472,7 @@ def summarize(start, end, tickets, changes):
 
     historicTicketsGraph = historicTicketCountsGraph(tickets)
 
-    del t, tkt, change
+    del t, tkt, change, openedByType, closedByType
     return locals()
 
 
@@ -436,7 +480,12 @@ TEXT_FORMAT = u"""\
 Bug summary
 ______________________
 Summary for %(start)s through %(end)s
-Bugs opened: %(bugsOpened)d    Bugs closed: %(bugsClosed)d  Total open bugs: %(totalOpenBugs)d (%(openBugChange)s)
+                   Opened        Closed       Total    Change
+Enhancements: %(enhancementsOpened)10d %(enhancementsClosed)10d %(enhancementsTotal)10d %(openEnhancementChange)s
+Defects:      %(defectsOpened)10d %(defectsClosed)10d %(defectsTotal)10d %(openDefectChange)s
+Tasks:        %(tasksOpened)10d %(tasksClosed)10d %(tasksTotal)10d %(openTaskChange)s
+Regressions:  %(regressionsOpened)10d %(regressionsClosed)10d %(regressionsTotal)10d %(openRegressionChange)s
+Total:        %(bugsOpened)10d %(bugsClosed)10d %(totalOpenBugs)10d (%(openBugChange)s)
 
 %(countChanges)s
 
@@ -471,7 +520,12 @@ HTML_FORMAT = u"""\
 Bug summary
 ______________________
 Summary for %(start)s through %(end)s
-Bugs opened: %(bugsOpened)d    Bugs closed: %(bugsClosed)d  Total open bugs: %(totalOpenBugs)d (%(openBugChange)s)
+                  Opened     Closed      Total     Change
+Enhancements: %(enhancementsOpened)10d %(enhancementsClosed)10d %(enhancementsTotal)10d %(openEnhancementChange)10s
+Defects:      %(defectsOpened)10d %(defectsClosed)10d %(defectsTotal)10d %(openDefectChange)10s
+Tasks:        %(tasksOpened)10d %(tasksClosed)10d %(tasksTotal)10d %(openTaskChange)10s
+Regressions:  %(regressionsOpened)10d %(regressionsClosed)10d %(regressionsTotal)10d %(openRegressionChange)10s
+Total:        %(bugsOpened)10d %(bugsClosed)10d %(totalOpenBugs)10d %(openBugChange)10s
 
 %(countChanges)s
 
@@ -573,10 +627,32 @@ def format(fmt, summary):
     return fmt % tracstats.udict(
         start=summary['start'].date().isoformat(),
         end=summary['end'].date().isoformat(),
+
+        enhancementsOpened=len(summary['enhancementsOpened']),
+        enhancementsClosed=len(summary['enhancementsClosed']),
+        enhancementsTotal=summary['totalOpenEnhancementCount'],
+        openEnhancementChange=formatDifference(len(summary['enhancementsOpened']), len(summary['enhancementsClosed'])),
+
+        defectsOpened=len(summary['defectsOpened']),
+        defectsClosed=len(summary['defectsClosed']),
+        defectsTotal=summary['totalOpenDefectCount'],
+        openDefectChange=formatDifference(len(summary['defectsOpened']), len(summary['defectsClosed'])),
+
+        tasksOpened=len(summary['tasksOpened']),
+        tasksClosed=len(summary['tasksClosed']),
+        tasksTotal=summary['totalOpenTaskCount'],
+        openTaskChange=formatDifference(len(summary['tasksOpened']), len(summary['tasksClosed'])),
+
+        regressionsOpened=len(summary['regressionsOpened']),
+        regressionsClosed=len(summary['regressionsClosed']),
+        regressionsTotal=summary['totalOpenRegressionCount'],
+        openRegressionChange=formatDifference(len(summary['regressionsOpened']), len(summary['regressionsClosed'])),
+
         bugsOpened=len(summary['bugsOpened']),
         bugsClosed=len(summary['bugsClosed']),
         totalOpenBugs=summary['totalOpenBugCount'],
         openBugChange=formatDifference(len(summary['bugsOpened']), len(summary['bugsClosed'])),
+
         countChanges=juxtapose(formatChange(u'Type', sorted(summary['typeChanges'].items())),
                                formatChange(u'Priority', sorted(summary['priorityChanges'].items(), key=lambda t: PRIORITY_ORDER.index(t[0]))),
                                formatChange(u'Component', sorted(summary['componentChanges'].items()))),
