@@ -4,6 +4,8 @@
 from os.path import expanduser
 from sys import argv
 
+from combinator.branchmgr import theBranchManager
+
 from twisted.python.filepath import FilePath
 from twisted.python.log import err
 from twisted.internet import reactor
@@ -27,12 +29,9 @@ def getBranches(branchesContainer):
                 yield tickets, branch
 
 
-def main(project, tracker):
+def main(manager, project, tracker):
     branchesContainer = FilePath(
-        expanduser('~')).child(
-        'Projects').child(
-        project).child(
-        'branches')
+        manager.projectBranchDir(project, 'foo')).parent()
     branches = getBranches(branchesContainer)
     d = cleanup(tracker, branches)
     d.addErrback(err, "Cleanup failed")
@@ -45,4 +44,4 @@ if __name__ == '__main__':
     if len(argv) != 3:
         print 'Usage: %s <project> <tracker>' % (argv[0],)
     else:
-        main(argv[1], argv[2])
+        main(theBranchManager, argv[1], argv[2])
