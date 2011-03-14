@@ -14,13 +14,7 @@ class MainTests(TestCase, SubversionMixin):
         """
         Create a minimal svn repository which the hook can be tested against.
         """
-        self.repository = FilePath(self.mktemp())
-        self.checkout = FilePath(self.mktemp())
-        self.standardRepository(self.repository, self.checkout)
-        self.trunk = self.checkout.child("trunk")
-        self.branches = self.checkout.child("branches")
-        self.tags = self.checkout.child("tags")
-        self.installHook(self.repository, hookFile)
+        self.createBasicRepository(hookFile)
 
 
     def test_branchCommit(self):

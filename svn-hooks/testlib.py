@@ -51,3 +51,16 @@ class SubversionMixin(object):
         FilePath(hookFile).copyTo(self.hook)
         self.hook.chmod(0700)
 
+
+    def createBasicRepository(self, hookFile):
+        """
+        Create a new SVN repository with trunk, branches, and tags.  Install the
+        given hook in it.
+        """
+        self.repository = FilePath(self.mktemp())
+        self.checkout = FilePath(self.mktemp())
+        self.standardRepository(self.repository, self.checkout)
+        self.trunk = self.checkout.child("trunk")
+        self.branches = self.checkout.child("branches")
+        self.tags = self.checkout.child("tags")
+        self.installHook(self.repository, hookFile)
