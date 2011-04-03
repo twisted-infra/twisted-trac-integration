@@ -111,7 +111,7 @@ class MainTests(TestCase, SubversionMixin):
     def test_trunkQuotesFile(self):
         """
         Committing to trunk without fixing or reopening a ticket is allowed if
-        the only changed file is doc/fun/Twisted.Quotes.
+        the only changed file is </trunk/doc/fun/Twisted.Quotes>.
         """
         # First get Twisted.Quotes into the repository at all.
         doc = self.trunk.child("doc")
