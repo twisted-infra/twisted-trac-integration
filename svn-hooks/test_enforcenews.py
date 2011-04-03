@@ -3,7 +3,28 @@ from twisted.python.filepath import FilePath
 from twisted.trial.unittest import TestCase
 
 from testlib import SubversionMixin, run
-from enforcenews import __file__ as hookFile, fileSetForTicket
+from enforcenews import Change, __file__ as hookFile, fileSetForTicket
+
+
+class ChangeTests(TestCase):
+    """
+    Tests for L{Change} which represents a single changed file in a changeset.
+    """
+    def test_equality(self):
+        """
+        Two L{Change} instances are equal to each other if and only if they have
+        the same path.
+        """
+        a = Change(["trunk", "foo"])
+        b = Change(["trunk", "foo"])
+        c = Change(["trunk", "bar"])
+        self.assertTrue(a == a)
+        self.assertTrue(a == b)
+        self.assertFalse(a == c)
+
+        self.assertFalse(a != a)
+        self.assertFalse(a != b)
+        self.assertTrue(a != c)
 
 
 class MainTests(TestCase, SubversionMixin):
@@ -70,6 +91,43 @@ class MainTests(TestCase, SubversionMixin):
         self.assertRaises(
             RuntimeError,
             self.commit, self.trunk, "Add some junk.  Fixes: #321")
+
+
+    def test_trunkCommitWithoutFixes(self):
+        """
+        Committing to trunk without fixing or reopening a ticket results in a
+        rejection from the pre-commit hook.
+        """
+        topfiles = self.trunk.child("topfiles")
+        topfiles.makedirs()
+        feature = topfiles.child("123.feature")
+        feature.setContent("this is great")
+        self.add(topfiles)
+        self.assertRaises(
+            RuntimeError,
+            self.commit, self.trunk, "Add some junk")
+
+
+    def test_trunkQuotesFile(self):
+        """
+        Committing to trunk without fixing or reopening a ticket is allowed if
+        the only changed file is doc/fun/Twisted.Quotes.
+        """
+        # First get Twisted.Quotes into the repository at all.
+        doc = self.trunk.child("doc")
+        fun = doc.child("fun")
+        fun.makedirs()
+        quotes = fun.child("Twisted.Quotes")
+        quotes.setContent("Foo")
+        topfiles = self.trunk.child("topfiles")
+        topfiles.makedirs()
+        topfiles.child("123.bugfix").setContent("Stuff")
+        self.add(topfiles, doc)
+        self.commit(self.trunk, "Add Twisted.Quotes.  Fixes: #123")
+
+        # Now change it without modifying a ticket.
+        quotes.setContent("Bar")
+        self.commit(self.trunk, "Change Twisted.Quotes to be more funny.")
 
 
     def test_trunkCommitWithNews(self):
