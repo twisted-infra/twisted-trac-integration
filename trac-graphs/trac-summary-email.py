@@ -147,7 +147,6 @@ def describeAverageTicketLifetime(tickets):
     Return a string describing the average time between the opening and closing
     of a ticket.
     """
-    now = datetime.datetime.now()
     closedTickets = [
         tkt for tkt in tickets.values() if tkt[u'status'] == u'closed']
 
