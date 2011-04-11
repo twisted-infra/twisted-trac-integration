@@ -1,5 +1,5 @@
 
-import tempfile
+import tempfile, cgi
 import sys, time, datetime, random, StringIO
 import email.Message, email.Generator, email.Utils
 
@@ -698,6 +698,19 @@ def report(from_, to, contentType, body):
     sendmail(from_, to, s)
 
 
+class HTML(object):
+    def __init__(self, html):
+        self.html = html
+
+
+    def __mod__(self, values):
+        return HTML(
+            self.html % dict(
+                (key, cgi.escape(value))
+                for (key, value)
+                in values.iteritems()))
+
+
 def main(db, from_, to, start=None, end=None):
     conn = psycopg2.connect(db)
     curs = conn.cursor()
@@ -713,7 +726,7 @@ def main(db, from_, to, start=None, end=None):
             summarize(
                 start, end,
                 tracstats.tickets(curs),
-                tracstats.changes(curs, start, end))))
+                tracstats.changes(curs, start, end))).html)
     curs.close()
     conn.close()
 
