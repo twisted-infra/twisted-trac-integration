@@ -704,11 +704,13 @@ class HTML(object):
 
 
     def __mod__(self, values):
-        return HTML(
-            self.html % dict(
-                (key, cgi.escape(value))
-                for (key, value)
-                in values.iteritems()))
+        escaped = {}
+        for (key, value) in values.iteritems():
+            if isinstance(value, (str, unicode)):
+                escaped[key] = cgi.escape(value)
+            else:
+                escaped[key] = value
+        return HTML(self.html % escaped)
 
 
 def main(db, from_, to, start=None, end=None):
@@ -722,7 +724,7 @@ def main(db, from_, to, start=None, end=None):
     report(
         from_, to, 'text/html',
         format(
-            HTML_FORMAT,
+            HTML(HTML_FORMAT),
             summarize(
                 start, end,
                 tracstats.tickets(curs),
