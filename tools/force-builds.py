@@ -12,28 +12,8 @@ from twisted.python import log
 from twisted.web import client
 from twisted.web.error import PageRedirect
 
-BUILDERS = [
-    'documentation',
-    'debian64-py2.4-select',
-    'debian-easy-py2.5-epoll',
-    'hardy32-py2.5-glib2',
-    'lucid64-py2.6-select',
-    'lucid32-py2.6-select',
-    'hardy32-py2.5-select',
-    'lucid32-py2.7maint',
-    # Skip py-select-gc
-    'py-without-modules',
-    'winxp32-py2.5',
-    'winxp32-py2.6',
-    'winxp32-py2.7',
-    'windows7-64-py2.7',
-    # Skip the MSI builders
-    'fedora11-64bit-py2.7',
-    'fedora32-py2.5-reactors',
-    'lucid64-py2.6-poll',
-    'lucid64-py2.6-epoll',
-    'osx10.6-py2.6-select',
-]
+SUPPORTED_BUILDERS_URL = (
+    "http://buildbot.twistedmatrix.com/supported-builders.txt")
 
 def main():
     if len(sys.argv) == 3:
@@ -61,21 +41,28 @@ def main():
         ('submit', 'Force Build'),
         ('branch', branch),
         ('comments', comments)]
-    if tests is not None:
-        BUILDERS.remove('documentation')
-        args.extend([
-            ('property1name', 'test-case-name'),
-            ('property1value', tests)])
 
-    for builder in BUILDERS:
-        print 'Forcing', builder, '...'
-        url = "http://buildbot.twistedmatrix.com/builders/" + builder + "/force"
-        
-        url = url + '?' + '&'.join([k + '=' + urllib.quote(v) for (k, v) in args])
-        requests.append(
-            lock.run(client.getPage, url, followRedirect=False).addErrback(ebList))
+    d = client.getPage(SUPPORTED_BUILDERS_URL)
+    def gotBuilders(buildersText):
+        builders = buildersText.splitlines()
 
-    d = defer.gatherResults(requests)
+
+        if tests is not None:
+            builders.remove('documentation')
+            args.extend([
+                ('property1name', 'test-case-name'),
+                ('property1value', tests)])
+
+        for builder in builders:
+            print 'Forcing', builder, '...'
+            url = "http://buildbot.twistedmatrix.com/builders/" + builder + "/force"
+
+            url = url + '?' + '&'.join([k + '=' + urllib.quote(v) for (k, v) in args])
+            requests.append(
+                lock.run(client.getPage, url, followRedirect=False).addErrback(ebList))
+
+        return defer.gatherResults(requests)
+    d.addCallback(gotBuilders)
     d.addErrback(log.err)
     d.addCallback(lambda ign: reactor.stop())
     reactor.run()
