@@ -1,5 +1,5 @@
 
-import tempfile
+import tempfile, cgi
 import sys, time, datetime, random, StringIO
 import email.Message, email.Generator, email.Utils
 
@@ -147,7 +147,6 @@ def describeAverageTicketLifetime(tickets):
     Return a string describing the average time between the opening and closing
     of a ticket.
     """
-    now = datetime.datetime.now()
     closedTickets = [
         tkt for tkt in tickets.values() if tkt[u'status'] == u'closed']
 
@@ -699,6 +698,21 @@ def report(from_, to, contentType, body):
     sendmail(from_, to, s)
 
 
+class HTML(object):
+    def __init__(self, html):
+        self.html = html
+
+
+    def __mod__(self, values):
+        escaped = {}
+        for (key, value) in values.iteritems():
+            if isinstance(value, (str, unicode)):
+                escaped[key] = cgi.escape(value)
+            else:
+                escaped[key] = value
+        return HTML(self.html % escaped)
+
+
 def main(db, from_, to, start=None, end=None):
     conn = psycopg2.connect(db)
     curs = conn.cursor()
@@ -710,11 +724,11 @@ def main(db, from_, to, start=None, end=None):
     report(
         from_, to, 'text/html',
         format(
-            HTML_FORMAT,
+            HTML(HTML_FORMAT),
             summarize(
                 start, end,
                 tracstats.tickets(curs),
-                tracstats.changes(curs, start, end))))
+                tracstats.changes(curs, start, end))).html)
     curs.close()
     conn.close()
 

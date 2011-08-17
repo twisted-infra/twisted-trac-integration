@@ -37,6 +37,14 @@ class Change(object):
         return '%s(%s)' % (self.__class__.__name__, self.path)
 
 
+    def __eq__(self, other):
+        return self.path == other.path
+
+
+    def __ne__(self, other):
+        return self.path != other.path
+
+
 
 class Add(Change):
     pass
@@ -67,7 +75,8 @@ def iterchanges(changed):
 
 def main():
     root, transaction = sys.argv[1:]
-    changed = getOutput(['/usr/bin/svnlook', 'changed', root, '--transaction', transaction])
+    changed = getOutput([
+            '/usr/bin/svnlook', 'changed', root, '--transaction', transaction])
     addedTopfiles = set()
     deletedTopfiles = set()
     trunkChanged = False
@@ -81,10 +90,19 @@ def main():
                     deletedTopfiles.add(change)
 
     if trunkChanged:
-        log = getOutput(['/usr/bin/svnlook', 'log', root, '--transaction', transaction])
+        log = getOutput([
+                '/usr/bin/svnlook', 'log', root, '--transaction', transaction])
 
         fixes = re.findall('(?:Fixes|Closes): #(\d+)', log, re.I)
         reopens = re.findall('Reopens: #(\d+)', log, re.I)
+
+        if not (fixes or reopens):
+            # If it doesn't change a ticket state, then it is only allowed to
+            # change the Quotes file
+            allowed = [Change(["trunk", "doc", "fun", "Twisted.Quotes"])]
+            if list(iterchanges(changed)) != allowed:
+                raise SystemExit(
+                    "Must either close or re-open a ticket with trunk commits.")
 
         for ticket in fixes:
             required = fileSetForTicket(ticket)
