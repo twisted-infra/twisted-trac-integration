@@ -10,8 +10,9 @@ from combinator.branchmgr import theBranchManager
 
 from twisted.web.server import NOT_DONE_YET
 from twisted.web.resource import IResource
+from twisted.web.error import Error
 from twisted.web.client import getPage
-from twisted.internet.utils import getProcessOutput as _getProcessOutput, getProcessOutputAndValue
+from twisted.internet.utils import getProcessOutputAndValue
 from twisted.python.filepath import FilePath
 from twisted.internet.defer import DeferredLock, gatherResults
 
@@ -118,33 +119,66 @@ class DiffResource(object):
 
 
     def _diffAndStat(self, request):
+        request.setHeader('content-type', 'text/plain')
+
         # First find the branch for the ticket requested.
         ticketFields = getPage(
             self.trackerRoot + 'ticket/' + str(self.ticket) + '?format=csv')
+        ticketFields.addCallback(csv)
+
         def gotFields(rows):
             fields = rows[0]
+            if fields['status'] == 'closed':
+                raise Exception("That ticket is closed.")
             return fields['branch'].split('/')[1]
+        ticketFields.addCallback(gotFields)
+
+        def checkBranchExistence(branch):
+            # Only try to compute a diff if the branch still exists in
+            # the HEAD revision.
+            d = getPage(self.trackerRoot + 'browser/branches/' + branch)
+            def succeeded(ignored):
+                return branch
+            def failed(reason):
+                reason.trap(Error)
+                raise Exception("That ticket's branch no long exists.")
+            d.addCallbacks(succeeded, failed)
+            return d
+        ticketFields.addCallback(checkBranchExistence)
+
         def gotBranch(branch):
             # Check it out with Combinator
             return getProcessOutput(chbranch, (self.projectName, branch), env=environ)
+        ticketFields.addCallback(gotBranch)
+
         def didChangeBranch(ignored):
             # Clean up trunk
             return getProcessOutput("svn", ("revert", "-R", self.projectTrunk), env=environ)
+        ticketFields.addCallback(didChangeBranch)
+
         def didCleanUpTrunk(ignored):
             # Clean it up some more
             return getProcessOutput("svn", ("st", self.projectTrunk), env=environ)
+        ticketFields.addCallback(didCleanUpTrunk)
+
         def gotStatus(lines):
             status = lines.splitlines()
             for aStatus in status:
                 if aStatus.startswith('?'):
                     ignored, fileName = aStatus.split(None, 1)
                     FilePath(self.projectTrunk).preauthChild(fileName).remove()
+        ticketFields.addCallback(gotStatus)
+
         def reallyCleanedUp(ignored):
             # Merge
             return getProcessOutput(unbranch, (self.projectName,), env=environ)
+        ticketFields.addCallback(reallyCleanedUp)
+
         def didMerge(ignored):
             # Get the diff
             return getProcessOutput("svn", ("diff", self.projectTrunk), env=environ)
+        ticketFields.addCallback(didMerge)
+
         def gotDiff(diff):
             # Get diffs for the adds, too.  Groan.
             mergeStatus = getProcessOutput("svn", ("status", self.projectTrunk), env=environ)
@@ -166,6 +200,7 @@ class DiffResource(object):
             mergeStatus.addCallback(gotStatus)
             mergeStatus.addCallback(gotExtraDiffs)
             return mergeStatus
+        ticketFields.addCallback(gotDiff)
 
         def gotAllDiffs(diff):
             # Get the diffstat for it.
@@ -181,24 +216,23 @@ class DiffResource(object):
                 return self.pageTemplate % {'diff': diff, 'diffstat': stat}
             diffStat.addCallback(gotStat)
             return diffStat
+        ticketFields.addCallback(gotAllDiffs)
 
         def ebRender(failure):
             failure.printTraceback(file=request)
-
-        request.setHeader('content-type', 'text/plain')
-
-        ticketFields.addCallback(csv)
-        ticketFields.addCallback(gotFields)
-        ticketFields.addCallback(gotBranch)
-        ticketFields.addCallback(didChangeBranch)
-        ticketFields.addCallback(didCleanUpTrunk)
-        ticketFields.addCallback(gotStatus)
-        ticketFields.addCallback(reallyCleanedUp)
-        ticketFields.addCallback(didMerge)
-        ticketFields.addCallback(gotDiff)
-        ticketFields.addCallback(gotAllDiffs)
         ticketFields.addCallbacks(request.write, ebRender)
+
         ticketFields.addCallback(lambda ignored: request.finish())
+
+        def cleanupSubversion(ignored):
+            # After the user has their page, clean up svn's tempfiles.
+            # Otherwise these accumulate over time and branching
+            # becomes more and more expensive (in time and disk
+            # usage).  We don't need to do this in the critical path
+            # though.
+            return getProcessOutput('svn', ('cleanup', self.projectTrunk), env=environ)
+        ticketFields.addCallback(cleanupSubversion)
+
         return ticketFields
 
 
