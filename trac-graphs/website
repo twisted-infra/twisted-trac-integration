@@ -19,7 +19,7 @@ def main():
         for f in files:
             website = name(f)
             print '%s.label %s' % (website, website)
-            print '%s.draw LINE2' % (website,)
+            print '%s.draw LINE1' % (website,)
             print '%s.type GAUGE' % (website,)
     else:
         for f in files:
