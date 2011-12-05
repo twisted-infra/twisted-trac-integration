@@ -1,0 +1,38 @@
+#!/usr/bin/python
+#
+# Munin plugin for monitoring page load times from the website
+#
+
+import os.path, sys, glob
+
+def name(path):
+    return os.path.splitext(os.path.basename(f))[0]
+
+
+def main():
+    files = glob.glob('/home/glyph/*.reqs')
+
+    if sys.argv[1:] == ['config']:
+        print 'graph_title Website Load Times'
+        print 'graph_category network'
+        print 'graph_vlabel Time (seconds)'
+        for f in files:
+            website = name(f)
+            print '%s.label %s' % (website, website)
+            print '%s.draw LINE2' % (website,)
+            print '%s.type GAUGE' % (website,)
+    else:
+        for f in files:
+            website = name(f)
+            fObj = file(f)
+            fObj.seek(-1000, os.SEEK_END)
+            lines = fObj.readlines()
+            result, start, interim, end = lines[-2].split()
+            if result == '200':
+                elapsed = float(end) - float(start)
+                print '%s.value %s' % (website, elapsed)
+            else:
+                print '%s.value U' % (website,)
+
+if __name__ == '__main__':
+    main()
