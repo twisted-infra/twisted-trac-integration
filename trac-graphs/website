@@ -6,7 +6,7 @@
 import os.path, sys, glob
 
 def name(path):
-    return os.path.splitext(os.path.basename(f))[0]
+    return os.path.splitext(os.path.basename(path))[0]
 
 
 def main():
