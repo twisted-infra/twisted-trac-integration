@@ -10,7 +10,7 @@ def name(path):
 
 
 def main():
-    files = glob.glob('/home/glyph/*.reqs')
+    files = glob.glob('/srv/www-monitoring/*.reqs')
 
     if sys.argv[1:] == ['config']:
         print 'graph_title Website Load Times'
