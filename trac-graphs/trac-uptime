@@ -1,0 +1,27 @@
+#!/usr/bin/python
+#
+# Munin plugin for monitoring trac server uptime
+#
+
+import os, sys, time
+
+def main():
+    if sys.argv[1:] == ['config']:
+        print 'graph_title Service Uptime'
+        print 'graph_category network'
+        print 'graph_vlabel Time (seconds)'
+	print 'trac_uptime.label Trac Uptime'
+        print 'trac_uptime.draw LINE1'
+        print 'trac_uptime.type GAUGE'
+    else:
+        fObj = file('/home/trac-migration/Run/trac/monitor-restarts.log')
+        fObj.seek(-1000, os.SEEK_END)
+        lines = fObj.readlines()
+        # Sun Dec 11 15:36:32 EST 2011
+        when = time.mktime(time.strptime(lines[-1].strip(), '%a %b %d %H:%M:%S %Z %Y'))
+        now = time.time()
+        print 'trac_uptime.value', (now - when)
+        
+
+if __name__ == '__main__':
+    main()
