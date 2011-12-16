@@ -45,6 +45,7 @@ def main():
             "SELECT DISTINCT reporter FROM ticket WHERE reporter != ''",
             "SELECT DISTINCT author FROM ticket_change WHERE author != ''",
             "SELECT DISTINCT author FROM wiki WHERE author != ''",
+            "SELECT DISTINCT author FROM attachment WHERE author != ''",
             ])
     curs = conn.cursor()
     curs.execute(
