@@ -1,7 +1,4 @@
 import sys
-from time import time
-from pprint import pprint
-from random import choice
 from os.path import expanduser
 
 import psycopg2
@@ -25,6 +22,7 @@ def loadUsernames(conn, queries):
     return results
 
 
+
 def filterCredentials(htpasswd, validUsers):
     output = []
     for account in htpasswd.getContent().split('\n'):
@@ -37,8 +35,8 @@ def filterCredentials(htpasswd, validUsers):
     new = htpasswd.sibling('htpasswd.new')
     new.setContent('\n'.join(output) + '\n')
     return new
-        
-    
+
+
 
 def main():
     conn = psycopg2.connect(DB)
