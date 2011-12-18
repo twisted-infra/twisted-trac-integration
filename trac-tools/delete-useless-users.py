@@ -40,13 +40,21 @@ def filterCredentials(htpasswd, validUsers):
 
 def main():
     conn = psycopg2.connect(DB)
+    possibleActivities = [
+        ('ticket', 'owner'),
+        ('ticket', 'reporter'),
+        ('ticket_change', 'author'),
+        ('wiki', 'author'),
+        ('attachment', 'author'),
+        ('component', 'owner'),
+        ('component_default_cc', 'cc'), # This is actually comma separated names
+        ('permission', 'username'),
+        ('report', 'author'),
+        ]
     users = loadUsernames(conn, [
-            "SELECT DISTINCT owner FROM ticket WHERE owner != ''",
-            "SELECT DISTINCT reporter FROM ticket WHERE reporter != ''",
-            "SELECT DISTINCT author FROM ticket_change WHERE author != ''",
-            "SELECT DISTINCT author FROM wiki WHERE author != ''",
-            "SELECT DISTINCT author FROM attachment WHERE author != ''",
-            ])
+            "SELECT DISTINCT %s FROM %s WHERE %s != ''" % (table, column)
+            for (table, column)
+            in possibleActivities])
     curs = conn.cursor()
     curs.execute(
         'SELECT sid FROM session WHERE authenticated = 1 AND sid NOT IN (%s)' % (', '.join(['%s'] * len(users)),),
