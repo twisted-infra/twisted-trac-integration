@@ -47,7 +47,6 @@ def main():
         ('wiki', 'author'),
         ('attachment', 'author'),
         ('component', 'owner'),
-        ('component_default_cc', 'cc'), # This is actually comma separated names
         ('permission', 'username'),
         ('report', 'author'),
         ]
@@ -55,6 +54,18 @@ def main():
             "SELECT DISTINCT %s FROM %s WHERE %s != ''" % (table, column)
             for (table, column)
             in possibleActivities])
+
+    possibleActivitiesWithCommas = [
+        ('component_default_cc', 'cc'),
+        ('ticket', 'cc'),
+        ]
+    for (table, column) in possibleActivitiesWithCommas:
+        someUsers = loadUsernames(
+            conn, "SELECT %s FROM %s WHERE %s != ''" % (table, column))
+        for users in someUsers:
+            for name in users.split(','):
+                users.add(name.strip())
+
     curs = conn.cursor()
     curs.execute(
         'SELECT sid FROM session WHERE authenticated = 1 AND sid NOT IN (%s)' % (', '.join(['%s'] * len(users)),),
