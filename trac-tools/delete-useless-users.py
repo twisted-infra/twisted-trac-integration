@@ -51,7 +51,7 @@ def main():
         ('report', 'author'),
         ]
     users = loadUsernames(conn, [
-            "SELECT DISTINCT %s FROM %s WHERE %s != ''" % (table, column)
+            "SELECT DISTINCT %s FROM %s WHERE %s != ''" % (column, table, column)
             for (table, column)
             in possibleActivities])
 
@@ -61,7 +61,7 @@ def main():
         ]
     for (table, column) in possibleActivitiesWithCommas:
         someUsers = loadUsernames(
-            conn, "SELECT %s FROM %s WHERE %s != ''" % (table, column))
+            conn, "SELECT %s FROM %s WHERE %s != ''" % (column, table, column))
         for users in someUsers:
             for name in users.split(','):
                 users.add(name.strip())
