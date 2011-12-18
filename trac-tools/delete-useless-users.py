@@ -61,9 +61,9 @@ def main():
         ]
     for (table, column) in possibleActivitiesWithCommas:
         someUsers = loadUsernames(
-            conn, "SELECT %s FROM %s WHERE %s != ''" % (column, table, column))
-        for users in someUsers:
-            for name in users.split(','):
+            conn, ["SELECT %s FROM %s WHERE %s != ''" % (column, table, column)])
+        for usernames in someUsers:
+            for name in usernames.split(','):
                 users.add(name.strip())
 
     curs = conn.cursor()
@@ -73,10 +73,11 @@ def main():
 
     credentials = filterCredentials(PASSWD, users)
 
-    for (sid,) in curs.fetchall():
-        assert "'" not in sid
-        print "DELETE FROM session_attribute WHERE sid = '%s'" % (sid,)
-        print "DELETE FROM session WHERE sid = '%s'" % (sid,)
+    sessionIdentifiers = list(curs.fetchall())
+    curs.execute('BEGIN')
+    curs.executemany("DELETE FROM session_attribute WHERE sid = %s", sessionIdentifiers)
+    curs.executemany("DELETE FROM session WHERE sid = %s", sessionIdentifiers)
+    curs.execute('COMMIT')
 
     print >>sys.stderr, "New password file at", credentials.path
 
