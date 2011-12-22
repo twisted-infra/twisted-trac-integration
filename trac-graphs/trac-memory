@@ -1,0 +1,41 @@
+#!/usr/bin/python
+
+import sys, subprocess, os.path
+
+def main():
+    if sys.argv[1:] == ['config']:
+        print 'graph_title Trac Memory Usage'
+        print 'graph_category network'
+        print 'graph_vlabel kB'
+        print 'trac_vsize.label Virtual Size'
+        print 'trac_vsize.draw LINE1'
+        print 'trac_vsize.type GAUGE'
+
+        print 'trac_size.label Swappable Size'
+        print 'trac_size.draw LINE1'
+        print 'trac_size.type GAUGE'
+
+        print 'trac_rss.label Resident Size'
+        print 'trac_rss.draw LINE1'
+        print 'trac_rss.type GAUGE'
+    else:
+        pidfile = os.path.expanduser('~trac-migration/Run/trac/twistd.pid')
+        if not os.path.exists(pidfile):
+            print 'trac_vsize U'
+            print 'trac_size U'
+            print 'trac_rss U'
+            return
+
+        pid = file(pidfile).read()
+
+        cmd = ['ps', '-o', 'vsize,size,rss', '-p', pid]
+        proc = subprocess.Popen(cmd, stdout=subprocess.PIPE)
+        proc.stdout.readline()
+        vsize, size, rss = map(int, proc.stdout.readline().split())
+        print 'trac_vsize.value', vsize
+        print 'trac_size.value', size
+        print 'trac_rss.value', rss
+
+
+if __name__ == '__main__':
+    main()
