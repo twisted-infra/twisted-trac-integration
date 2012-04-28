@@ -7,13 +7,58 @@ a particular branch.
 
 import os, sys, pwd, urllib
 
-from twisted.internet import reactor, defer
+import twisted
+from twisted.internet import reactor, defer, protocol
 from twisted.python import log
-from twisted.web import client
-from twisted.web.error import PageRedirect
+from twisted.web import client, http, http_headers
+
+VERSION = "0.1"
 
 SUPPORTED_BUILDERS_URL = (
     "http://buildbot.twistedmatrix.com/supported-builders.txt")
+
+USER_AGENT = (
+    "force-builds.py/%(version)s (%(name)s; %(platform)s) Twisted/%(twisted)s "
+    "Python/%(python)s" % dict(
+        version=VERSION, name=os.name, platform=sys.platform,
+        twisted=twisted.__version__, python=hex(sys.hexversion)))
+
+
+
+class _CollectBody(protocol.Protocol):
+    def __init__(self, result):
+        self.result = result
+        self.buffer = []
+
+
+    def dataReceived(self, data):
+        self.buffer.append(data)
+
+
+    def connectionLost(self, reason):
+        if reason.check(client.ResponseDone):
+            self.result.callback("".join(self.buffer))
+        else:
+            self.result.errback(reason)
+
+
+
+class Disconnect(protocol.Protocol):
+    def makeConnection(self, transport):
+        transport.stopProducing()
+
+
+
+def readBody(response):
+    if response.code in (http.OK, http.FOUND):
+        result = defer.Deferred()
+        protocol = _CollectBody(result)
+        response.deliverBody(protocol)
+        return result
+    response.deliverBody(Disconnect())
+    raise Exception("Unexpected response code: %d", response.code)
+
+
 
 def main():
     if len(sys.argv) == 3:
@@ -31,9 +76,10 @@ def main():
     lock = defer.DeferredLock()
     requests = []
     def ebList(err):
-        if err.check(PageRedirect) is not None:
-            return None
         log.err(err, "Build force failure")
+
+    def forced(result, builder):
+        print 'Forced', builder, '.'
 
     args = [
         ('username', pwd.getpwuid(os.getuid())[0]),
@@ -42,10 +88,13 @@ def main():
         ('branch', branch),
         ('comments', comments)]
 
-    d = client.getPage(SUPPORTED_BUILDERS_URL)
+    agent = client.Agent(reactor, pool=client.HTTPConnectionPool(reactor))
+
+    headers = http_headers.Headers({'user-agent': [USER_AGENT]})
+    d = agent.request('GET', SUPPORTED_BUILDERS_URL, headers)
+    d.addCallback(readBody)
     def gotBuilders(buildersText):
         builders = buildersText.splitlines()
-
 
         if tests is not None:
             builders.remove('documentation')
@@ -54,12 +103,16 @@ def main():
                 ('property1value', tests)])
 
         for builder in builders:
-            print 'Forcing', builder, '...'
-            url = "http://buildbot.twistedmatrix.com/builders/" + builder + "/force"
 
-            url = url + '?' + '&'.join([k + '=' + urllib.quote(v) for (k, v) in args])
-            requests.append(
-                lock.run(client.getPage, url, followRedirect=False).addErrback(ebList))
+            def f(builder, headers):
+                print 'Forcing', builder, '...'
+                url = "http://buildbot.twistedmatrix.com/builders/" + builder + "/force"
+                url = url + '?' + '&'.join([k + '=' + urllib.quote(v) for (k, v) in args])
+                d = agent.request("GET", url, headers)
+                d.addCallback(readBody)
+                d.addCallback(forced, builder)
+                return d
+            requests.append(lock.run(f, builder, headers).addErrback(ebList))
 
         return defer.gatherResults(requests)
     d.addCallback(gotBuilders)
