@@ -136,8 +136,10 @@ class RepositoryChange:
 
     def change(self, repo, rev, author, msg, changes):
         sentTo = []
-        for (repoRule, pathRule, channel) in config.COMMIT_RULES:
-            if channel not in sentTo:
+        for (repoRule, pathRule, channels) in config.COMMIT_RULES:
+            for channel in channels:
+                if channel in sentTo:
+                    continue
                 if re.match(repoRule, repo):
                     for change in changes:
                         if re.match(pathRule, change.path):

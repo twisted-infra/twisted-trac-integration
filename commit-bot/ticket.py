@@ -41,17 +41,18 @@ class TicketChange:
         'new %(component)s %(kind)s #%(id)d by %(author)s: %(subject)s')
 
     def ticket(self, ticket):
-        for (url, chan) in config.TICKET_RULES:
+        for (url, channels) in config.TICKET_RULES:
             scheme, netloc, path, params, query, fragment = urlparse.urlparse(url)
             if '@' in netloc:
                 netloc = netloc.split('@', 1)[1]
             url = urlparse.urlunparse((scheme, netloc, path, params, query, fragment))
             if ticket.tracker == url:
-                self.join(chan)
-                self.msg(
-                    chan,
-                    self.ticketMessageFormat % vars(ticket),
-                    config.LINE_LENGTH)
+                for channel in channels:
+                    self.join(channel)
+                    self.msg(
+                        channel,
+                        self.ticketMessageFormat % vars(ticket),
+                        config.LINE_LENGTH)
 
 
 

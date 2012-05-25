@@ -23,12 +23,12 @@ LINE_RATE = 1.0
 # Three-tuples of (repository path, filename expression, channel) defining
 # the rules for announcing commit messages.
 COMMIT_RULES = [
-    ('/svn/Divmod', '.*', '#divmod.test')]
+    ('/svn/Divmod', '.*', ['#divmod.test'])]
 
 # Two-tuples of (tracker URL, channel) defining the rules for announcing
 # ticket changes.
 TICKET_RULES = [
-    ('http://example.com/trac/', '#bottest')]
+    ('http://example.com/trac/', ['#bottest'])]
 
 # The channel to which to send alerts.
 ALERT_CHANNEL = '#bottest'
