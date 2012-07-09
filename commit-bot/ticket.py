@@ -70,13 +70,14 @@ class TicketReview:
 
     def privmsg(self, user, channel, message):
         if 'review branches' in message:
-            for (url, chan) in config.TICKET_RULES:
-                if chan == channel:
-                    d = self.reportReviewTickets(url, chan)
-                    d.addErrback(
-                        log.err,
-                        "Failed to satisfy review ticket request from "
-                        "%r to %r" % (url, chan))
+            for (url, channels) in config.TICKET_RULES:
+                for existing_channel in channels:
+                    if existing_channel == channel:
+                        d = self.reportReviewTickets(url, channel)
+                        d.addErrback(
+                            log.err,
+                            "Failed to satisfy review ticket request from "
+                            "%r to %r" % (url, channel))
 
 
     def connectionLost(self, reason):
@@ -88,12 +89,13 @@ class TicketReview:
         """
         Call L{reportReviewTickets} with each element of L{config.TICKET_RULES}.
         """
-        for (url, channel) in config.TICKET_RULES:
-            d = self.reportReviewTickets(url, channel)
-            d.addErrback(
-                log.err,
-                "Failed to report review tickets from %r to %r" % (
-                    url, channel))
+        for (url, channels) in config.TICKET_RULES:
+            for channel in channels:
+                d = self.reportReviewTickets(url, channel)
+                d.addErrback(
+                    log.err,
+                    "Failed to report review tickets from %r to %r" % (
+                        url, channel))
 
 
     def reportReviewTickets(self, trackerRoot, channel):
