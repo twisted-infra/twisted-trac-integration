@@ -96,13 +96,18 @@ class TicketReview:
                     log.err,
                     "Failed to report review tickets from %r to %r" % (
                         url, channel))
-        for (project, channels) in config.LAUNCHPAD_MERGE_PROPOSAL_RULES:
-            d = self.getMergeProposals(project)
-            d.addCallback(self.reportMergeProposals, project, channels)
-            d.addErrback(
-                log.err,
-                format="Problem with merge proposals for %(project)s",
-                project=project)
+
+        # XXX It's possible this works, but I've never tested it because
+        # installing launchpadlib is implausibly difficult and I'm sick of
+        # dealing with it.
+
+        # for (project, channels) in config.LAUNCHPAD_MERGE_PROPOSAL_RULES:
+        #     d = self.getMergeProposals(project)
+        #     d.addCallback(self.reportMergeProposals, project, channels)
+        #     d.addErrback(
+        #         log.err,
+        #         format="Problem with merge proposals for %(project)s",
+        #         project=project)
 
 
     def getMergeProposals(self, project):
@@ -114,8 +119,8 @@ class TicketReview:
 
         @note: This uses the blocking launchpadlib library in a thread.
         """
-        from launchpadlib.launchpad import Launchpad
         def blocking():
+            from launchpadlib.launchpad import Launchpad
             results = []
             pad = Launchpad.login_anonymously(
                 'Twisted Project Commit Bot', 'production', '.')
