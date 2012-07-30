@@ -1,7 +1,7 @@
 
 import time, urlparse
 
-from twisted.internet import reactor, task
+from twisted.internet import reactor, threads, task
 from twisted.spread import pb
 from twisted.python import log
 from twisted.web import error, http
@@ -96,6 +96,53 @@ class TicketReview:
                     log.err,
                     "Failed to report review tickets from %r to %r" % (
                         url, channel))
+        for (project, channels) in config.LAUNCHPAD_MERGE_PROPOSAL_RULES:
+            d = self.getMergeProposals(project)
+            d.addCallback(self.reportMergeProposals, project, channels)
+            d.addErrback(
+                log.err,
+                format="Problem with merge proposals for %(project)s",
+                project=project)
+
+
+    def getMergeProposals(self, project):
+        """
+        Retrieve all Launchpad merge proposals for the given project.
+
+        @return: A L{Deferred} which fires with a C{list} of C{unicode}, with
+            each element of the list describing one merge proposal.
+
+        @note: This uses the blocking launchpadlib library in a thread.
+        """
+        from launchpadlib.launchpad import Launchpad
+        def blocking():
+            results = []
+            pad = Launchpad.login_anonymously(
+                'Twisted Project Commit Bot', 'production', '.')
+            proposals = list(pad.projects[u'divmod.org'].getMergeProposals())
+            for proposal in proposals:
+                branch = proposal.source_branch
+                bugs = list(branch.linked_bugs)
+                if bugs:
+                    results.append(
+                        u'lp:%(id)d %(branch)s' % dict(
+                            id=bugs[0].id, branch=branch.name))
+            return results
+        return threads.deferToThread(blocking)
+
+
+    def reportMergeProposals(self, proposals, project, channels):
+        """
+        If there are any merge proposal for a project, report them in the given
+        channels.
+        """
+        if proposals:
+            message = u"%s merge proposals: %s" % (
+                project, u'; '.join(proposals))
+            encoded = message.encode('utf-8')
+            for channel in channels:
+                self.join(channel)
+                self.msg(channel, encoded)
 
 
     def reportReviewTickets(self, trackerRoot, channel):

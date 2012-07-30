@@ -30,6 +30,12 @@ COMMIT_RULES = [
 TICKET_RULES = [
     ('http://example.com/trac/', ['#bottest'])]
 
+# Two-tuples of (project name, list of channels) defining the rules for
+# announcing active Launchpad merge proposals.
+LAUNCHPAD_MERGE_PROPOSAL_RULES = [
+    ('Example', ['#bottest']),
+    ]
+
 # The channel to which to send alerts.
 ALERT_CHANNEL = '#bottest'
 
