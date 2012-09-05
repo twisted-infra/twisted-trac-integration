@@ -46,6 +46,7 @@ def main():
         ('revision', ''),
         ('submit', 'Force Build'),
         ('branch', branch),
+        ('test-case-name', tests),
         ('reason', '%s: %s' % (pwd.getpwuid(os.getuid())[0], comments))]
 
     agent = client.Agent(reactor, pool=client.HTTPConnectionPool(reactor))
