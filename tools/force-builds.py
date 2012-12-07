@@ -14,9 +14,6 @@ from twisted.web import client, http_headers
 
 VERSION = "0.1"
 
-SUPPORTED_BUILDERS_URL = (
-    "http://buildbot.twistedmatrix.com/supported-builders.txt")
-
 USER_AGENT = (
     "force-builds.py/%(version)s (%(name)s; %(platform)s) Twisted/%(twisted)s "
     "Python/%(python)s" % dict(
