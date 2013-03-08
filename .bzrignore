@@ -1,0 +1,5 @@
+./svn-hooks/git/svn
+./svn-hooks/git/refs
+./svn-hooks/git/HEAD
+./svn-hooks/git/logs
+./svn-hooks/git/objects

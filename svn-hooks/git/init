@@ -1,0 +1,27 @@
+#!/usr/bin/python
+
+from twisted.python import usage
+from twisted.python.filepath import FilePath
+from subprocess import check_call, check_output
+
+def main():
+    dir = FilePath('.')
+    if not dir.child('objects').isdir():
+        dir.child('objects').createDirectory()
+    if not dir.child('refs').isdir():
+        dir.child('refs').createDirectory()
+    if not dir.child('svn').isdir():
+        dir.child('svn').createDirectory()
+    dir.child('HEAD').setContent('ref: refs/heads/trunk')
+    for key in ['svn-remote.svn.branches-maxRev',
+                'svn-remote.svn.tags-maxRev',
+                'svn-remote.svn-releases.branches-maxRev']:
+        check_call(['git', 'config', '-f', 'svn/.metadata', key, '37400'])
+
+    check_call(['git', 'fetch', 'mirror'])
+    check_output(['git', 'update-ref', '-d', 'refs/svn/trunk'])
+    for ref in check_output(['git', 'for-each-ref', '--format=%(refname)', 'refs/svn/releases/']).splitlines():
+        check_output(['git', 'update-ref', '-d', ref])
+
+if __name__ == '__main__':
+    main()

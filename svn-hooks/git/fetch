@@ -1,0 +1,8 @@
+#!/bin/sh
+cd $(dirname $0)
+# Note: due to a bug in git-svn, ignore-paths doesn't work in config
+git svn fetch --ignore-paths '^branches/releases.*' svn
+git svn fetch svn-releases
+git push mirror-prep
+git update-ref -d refs/mirror/releases
+GIT_SSH=./deploy-ssh git push mirror
