@@ -2,7 +2,7 @@
 
 from twisted.python import usage
 from twisted.python.filepath import FilePath
-from subprocess import check_call, check_output
+from subprocess import check_call
 
 class Options(usage.Options):
     def parseArgs(self, revno = '37400'):
@@ -22,12 +22,17 @@ def main(config):
                 'svn-remote.svn-releases.branches-maxRev']:
         check_call(['git', 'config', '-f', 'svn/.metadata', key, config.revno])
 
-    check_call(['git', 'fetch', 'mirror'])
-    check_output(['git', 'update-ref', '-d', 'refs/svn/trunk'])
-    for ref in check_output(['git', 'for-each-ref', '--format=%(refname)', 'refs/svn/releases/']).splitlines():
-        check_output(['git', 'update-ref', '-d', ref])
+    # Remove this before, in case we've been run before.
+    dir.child('refs').child('svn').child('releases').remove()
+
+    check_call(['git', 'fetch', 'fetch'])
+    check_call(['git', 'update-ref', '-d', 'refs/svn/trunk'])
+
+    # Remove this after, so that 'git svn fetch svn' can create
+    # it's stupid 'releases' branch.
+    dir.child('refs').child('svn').child('releases').remove()
 
 if __name__ == '__main__':
     config = Options()
-    options.parseOptions()
+    config.parseOptions()
     main(config)

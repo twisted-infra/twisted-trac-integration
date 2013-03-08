@@ -25,7 +25,7 @@
 	push = refs/tags/*
 	push = refs/heads/releases/*
 [remote "fetch"]
-	url = git@github.com:tomprince/twisted.git
+	url = https://github.com/tomprince/twisted.git
 	fetch = refs/heads/*:refs/svn/*
 	fetch = refs/heads/trunk:refs/heads/trunk
 	fetch = refs/tags/*:refs/tags/*
