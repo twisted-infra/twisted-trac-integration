@@ -1,0 +1,15 @@
+This is a git configuration and scripts to automatically mirror twisted's
+svn repository to git.
+
+# turns current directory into a git repository, and initializes it
+# from the public mirror.
+# @param revno: last mirrored svn version
+./init <revno>
+
+# fetch from svn and push to public mirror
+# expects ./deploy-key to be a ssh-key with access to public repo
+./fetch
+
+
+# ssh script which uses ./deploy-key
+./deploy-ssh

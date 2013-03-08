@@ -8,8 +8,12 @@
         fetch = trunk:refs/heads/trunk
         branches = branches/*:refs/svn/*
         tags = tags/releases/*:refs/tags/*
+# No ignored-paths because it doesn't work with multiple svn-remotes
 [svn-remote "svn-releases"]
         url = svn://svn.twistedmatrix.com/svn/Twisted
+# This is superfluous, but git-svn wants to start at the
+# beginning, if there isn't a explicit fetch specified
+        fetch = trunk:refs/heads/trunk
         branches = branches/releases/*:refs/heads/releases/*
 [remote "mirror-prep"]
 	url = .
@@ -20,6 +24,8 @@
 	push = refs/heads/trunk
 	push = refs/tags/*
 	push = refs/heads/releases/*
+[remote "fetch"]
+	url = git@github.com:tomprince/twisted.git
 	fetch = refs/heads/*:refs/svn/*
 	fetch = refs/heads/trunk:refs/heads/trunk
 	fetch = refs/tags/*:refs/tags/*
