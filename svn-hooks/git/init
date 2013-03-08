@@ -29,7 +29,7 @@ def main(config):
     check_call(['git', 'update-ref', '-d', 'refs/svn/trunk'])
 
     # Remove this after, so that 'git svn fetch svn' can create
-    # it's stupid 'releases' branch.
+    # its stupid 'releases' branch.
     dir.child('refs').child('svn').child('releases').remove()
 
 if __name__ == '__main__':
