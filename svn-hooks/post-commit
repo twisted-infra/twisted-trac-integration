@@ -1,0 +1,110 @@
+#!/bin/bash -x
+
+# POST-COMMIT HOOK
+#
+# The post-commit hook is invoked after a commit.  Subversion runs
+# this hook by invoking a program (script, executable, binary, etc.)
+# named 'post-commit' (for which this file is a template) with the 
+# following ordered arguments:
+#
+#   [1] REPOS-PATH   (the path to this repository)
+#   [2] REV          (the number of the revision just committed)
+#
+# The default working directory for the invocation is undefined, so
+# the program should set one explicitly if it cares.
+#
+# Because the commit has already completed and cannot be undone,
+# the exit code of the hook program is ignored.  The hook program
+# can use the 'svnlook' utility to help it examine the
+# newly-committed tree.
+#
+# On a Unix system, the normal procedure is to have 'post-commit'
+# invoke other programs to do the real work, though it may do the
+# work itself too.
+#
+# Note that 'post-commit' must be executable by the user(s) who will
+# invoke it (typically the user httpd runs as), and that user must
+# have filesystem-level permission to access the repository.
+#
+# On a Windows system, you should name the hook program
+# 'post-commit.bat' or 'post-commit.exe',
+# but the basic idea is the same.
+# 
+# Here is an example hook script, for a Unix /bin/sh interpreter:
+
+REPOS="$1"
+REV="$2"
+LOG=`/usr/bin/svnlook log -r $REV $REPOS`
+AUTHOR=`/usr/bin/svnlook author -r $REV $REPOS`
+
+
+LOCK_DIR=/var/lock/svn-hooks
+
+if [ -e "${LOCK_DIR}" ];
+then
+    echo "Lock dir exists."
+else
+    # This is a race condition, but only the first time after we
+    # restart, and this is still better than previously where we never
+    # created it in the first place.
+    /bin/mkdir "${LOCK_DIR}"
+    /bin/chgrp cvs-twisted "${LOCK_DIR}"
+    /bin/chmod g+rwx "${LOCK_DIR}"
+fi
+
+umask 0000
+
+(
+    set -x
+    umask 0022
+    echo "Acquiring locks..."
+    # Arbitrarily selected integers to allocate as file descriptors
+    # which can be locked using flock.  SELF_REV is associated with a
+    # file named after the current revision.  PREV_REV is associated
+    # with a file named after the previous revision.  Acquiring both
+    # of these will force FIFO ordering.  See the redirection on this
+    # entire subshell for the definitions.
+    flock "${SELF_REV}"
+    flock "${PREV_REV}"
+    echo -n "Locked."
+    date
+
+    echo -n "BEGIN ${REPOS} ${REV}"
+    date
+
+    # echo "GIT"
+    # sudo -u www-data /var/www/.local/bin/update-git.sh
+    echo -n "GIT"
+    date
+    sudo -u gitmirror /usr/bin/env -i /svn/Twisted/hooks/git/fetch
+
+    echo -n "BZR"
+    date
+    time sudo -H -u www-data /var/www/bzr/incremental-bzr-update.sh "${REPOS}" "${REV}"
+
+    echo -n "MAILER"
+    date
+    /svn/Twisted/hooks/subversion_mailer.py commit "${REPOS}" "${REV}"
+
+    echo -n "RSYNC"
+    date
+    /svn/Twisted/hooks/rsync-repo
+
+    echo -n "COMMITBOT"
+    date
+    /home/exarkun/commit-bot/commit "${REPOS}" "${REV}"
+
+    echo -n "TRACHOOK"
+    date
+    /svn/Twisted/hooks/trac-post-commit-pb-client "${REV}" "${AUTHOR}" "${LOG}" cube.twistedmatrix.com 38159
+
+    echo -n "BUILDBOT"
+    date
+    /svn/Twisted/hooks/svn_buildbot.py --repository "${REPOS}" --revision "${REV}" --bbserver buildbot.twistedmatrix.com --bbport 9987
+
+) >> ~/.post-commit.log 2>&1 {SELF_REV}>$LOCK_DIR/$REV {PREV_REV}<$LOCK_DIR/$(($REV-1))
+
+# When everything is done, clean up the older of the two lock files.
+# If we acquired it, the post-commit hook for that revision completed
+# already and no future hooks will need it, so it's garbage.
+rm -f /var/lock/svn-hooks/$((${REV}-1))
