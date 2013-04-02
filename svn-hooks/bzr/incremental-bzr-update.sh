@@ -9,6 +9,7 @@ BZR_MIRROR_ROOT='/var/www/bzr/Twisted/'
 
 TRUNK_FOLDER="trunk/"
 BRANCHES_FOLDER="branches/"
+RELEASE_FOLDER="releases/"
 SVNLOOK_BIN=`which svnlook`
 BZR_BIN=`which bzr`
 MKDIR_BIN=`which mkdir`
@@ -65,6 +66,12 @@ check_mirror_structure() {
     if [ ! -d $branches_path ]
     then
         $MKDIR_BIN -p $branches_path
+    fi
+
+    release_branches_path=${BZR_MIRROR_ROOT}${BRANCHES_FOLDER}${RELEASE_FOLDER}
+    if [ ! -d $release_branches_path ]
+    then
+        $MKDIR_BIN -p $release_branches_path
     fi
 }
 
@@ -221,10 +228,18 @@ do
     if [[ "$path" = ${BRANCHES_FOLDER}* ]]
     then
         branch_name=${path##${BRANCHES_FOLDER}}
-        branch_name=${branch_name%%/*}
+        if [[ "$branch_name" == ${RELEASE_FOLDER}* ]]
+	then
+            release_name=${branch_name##${RELEASE_FOLDER}}
+            release_name=${release_name%%/*}
+            branch_name=${RELEASE_FOLDER}$branch_name
+        else
+            branch_name=${branch_name%%/*}
+        fi
 
         # Look for changes to root branches (add/delete).
-        if [[ "$path" =~ ${BRANCHES_FOLDER}[^/]+/$ ]]
+        if [[ "$path" =~ ${BRANCHES_FOLDER}[^/]+/$
+	   || "$path" =~ ${BRANCHES_FOLDER}${RELEASE_FOLDER}[^/]+/$ ]]
         then
             if [[ "$action" = "A" ]]
             then

@@ -12,7 +12,8 @@ pushd branches
 
 # Update or add remote branches.
 remote_branches=`svn ls ${REMOTE_BASE_URL}/branches`
-for remote_branch in $remote_branches
+remote_release_branches=`svn ls ${REMOTE_BASE_URL}/branches/releases | sed -e 's,^,releases/,'`
+for remote_branch in $remote_branches $remote_release_branches
 do
         # Skip the directory containing release branches - it, itself, is not a branch.
         if [ $remote_branch == "releases" ]; then
@@ -32,8 +33,13 @@ done
 
 # Delete local branches that are no longer used on the server.
 local_branches=`ls -1`
-for local_branch in $local_branches
+local_release_branches=`ls -1 releases | sed -e 's,^,releases/,'`
+for local_branch in $local_branches $local_release_branches
 do
+        # Skip the directory containing release branches - it, itself, is not a branch.
+        if [ $local_branch == "releases" ]; then
+	        continue
+	fi
         if [[ $remote_branches == *$local_branch* ]]; then
                 echo '* Branch exists' `pwd`/$local_branch
         else
