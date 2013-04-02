@@ -11,7 +11,7 @@ popd
 pushd branches
 
 # Update or add remote branches.
-remote_branches=`svn ls ${REMOTE_BASE_URL}/branches`
+remote_branches=`svn ls ${REMOTE_BASE_URL}/branches | sed -e '/^releases\//d'`
 remote_release_branches=`svn ls ${REMOTE_BASE_URL}/branches/releases | sed -e 's,^,releases/,'`
 for remote_branch in $remote_branches $remote_release_branches
 do
