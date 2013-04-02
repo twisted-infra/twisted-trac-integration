@@ -17,9 +17,9 @@ for remote_branch in $remote_branches $remote_release_branches
 do
         # Skip the directory containing release branches - it, itself, is not a branch.
         if [ $remote_branch == "releases" ]; then
-	        continue
-	fi
-	    
+                continue
+        fi
+
         if [ -d ./$remote_branch ]; then
                 pushd ./$remote_branch > /dev/null
                         echo '* Updating' `pwd`
@@ -38,8 +38,8 @@ for local_branch in $local_branches $local_release_branches
 do
         # Skip the directory containing release branches - it, itself, is not a branch.
         if [ $local_branch == "releases" ]; then
-	        continue
-	fi
+                continue
+        fi
         if [[ $remote_branches == *$local_branch* ]]; then
                 echo '* Branch exists' `pwd`/$local_branch
         else

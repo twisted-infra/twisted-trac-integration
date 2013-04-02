@@ -229,7 +229,7 @@ do
     then
         branch_name=${path##${BRANCHES_FOLDER}}
         if [[ "$branch_name" == ${RELEASE_FOLDER}* ]]
-	then
+        then
             release_name=${branch_name##${RELEASE_FOLDER}}
             release_name=${release_name%%/*}
             branch_name=${RELEASE_FOLDER}$branch_name
@@ -239,7 +239,7 @@ do
 
         # Look for changes to root branches (add/delete).
         if [[ "$path" =~ ${BRANCHES_FOLDER}[^/]+/$
-	   || "$path" =~ ${BRANCHES_FOLDER}${RELEASE_FOLDER}[^/]+/$ ]]
+           || "$path" =~ ${BRANCHES_FOLDER}${RELEASE_FOLDER}[^/]+/$ ]]
         then
             if [[ "$action" = "A" ]]
             then
