@@ -11,12 +11,12 @@ popd
 pushd branches
 
 # Update or add remote branches.
-remote_branches=`svn ls ${REMOTE_BASE_URL}/branches | sed -e '/^releases\//d'`
+remote_branches=`svn ls ${REMOTE_BASE_URL}/branches`
 remote_release_branches=`svn ls ${REMOTE_BASE_URL}/branches/releases | sed -e 's,^,releases/,'`
 for remote_branch in $remote_branches $remote_release_branches
 do
         # Skip the directory containing release branches - it, itself, is not a branch.
-        if [ $remote_branch == "releases" ]; then
+        if [ $remote_branch == "releases/" ]; then
                 continue
         fi
 
@@ -40,7 +40,7 @@ do
         if [ $local_branch == "releases" ]; then
                 continue
         fi
-        if [[ $remote_branches == *$local_branch* ]]; then
+        if [[ "$remote_branches $remote_release_branches" == *$local_branch* ]]; then
                 echo '* Branch exists' `pwd`/$local_branch
         else
                 echo '- Removing' `pwd`/$local_branch
