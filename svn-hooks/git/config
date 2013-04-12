@@ -19,13 +19,13 @@
 	url = .
 	push = refs/svn/*:refs/mirror/*
 [remote "mirror"]
-	url = git@github.com:tomprince/twisted.git
+	url = git@github.com:twisted/twisted.git
 	push = refs/mirror/*:refs/heads/*
 	push = refs/heads/trunk
 	push = refs/tags/*
 	push = refs/heads/releases/*
 [remote "fetch"]
-	url = https://github.com/tomprince/twisted.git
+	url = https://github.com/twisted/twisted.git
 	fetch = refs/heads/*:refs/svn/*
 	fetch = refs/heads/trunk:refs/heads/trunk
 	fetch = refs/tags/*:refs/tags/*
