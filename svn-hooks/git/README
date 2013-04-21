@@ -8,8 +8,12 @@ svn repository to git.
 
 # fetch from svn and push to public mirror
 # expects ./deploy-key to be a ssh-key with access to public repo
+# i.e. add it to https://github.com/twisted/twisted/settings/keys
 ./fetch
-
 
 # ssh script which uses ./deploy-key
 ./deploy-ssh
+
+# Anybody who commits needs to be able to run the fetch script
+# The following sudoers line should be the correct thing on wolfwood
+%cvs-twisted ALL=(gitmirror)NOPASSWD:/usr/bin/env -i /var/www/git/Twisted/fetch
