@@ -72,11 +72,9 @@ umask 0000
     echo -n "BEGIN ${REPOS} ${REV}"
     date
 
-    # echo "GIT"
-    # sudo -u www-data /var/www/.local/bin/update-git.sh
     echo -n "GIT"
     date
-    sudo -u gitmirror /usr/bin/env -i /svn/Twisted/hooks/git/fetch
+    sudo -u gitmirror /usr/bin/env -i /var/www/git/Twisted/fetch
 
     echo -n "BZR"
     date
