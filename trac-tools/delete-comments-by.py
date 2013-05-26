@@ -14,8 +14,11 @@ def main(dbargs, commenter):
     conn = connect(dbargs)
     curs = conn.cursor()
     execute(curs, 'SELECT ticket FROM ticket_change WHERE author = %s', (commenter,))
-    tickets = list(curs)
+    tickets = set(curs)
+    execute(curs, "SELECT id FROM attachment WHERE type = 'ticket' AND author = %s", (commenter,))
+    tickets.update(set(curs))
     execute(curs, 'DELETE FROM ticket_change WHERE author = %s', (commenter,))
+    execute(curs, 'DELETE FROM attachment WHERE author = %s', (commenter,))
     for (id,) in tickets:
         execute(curs, 'SELECT MAX(time) FROM ticket_change WHERE ticket = %s', (id,))
         results = list(curs.fetchall())
