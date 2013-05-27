@@ -101,6 +101,7 @@ int main(int argc, char** argv) {
 		rsync,
 		sizeof rsync,
 		"%s -e \"%s -i %s\" -avz --delete --exclude db/current "
+		"--exclude hooks"
 		"--exclude db/transactions/ \"%s\" \"%s/\"",
 		RSYNC, SSH, KEY, REPO, DEST);
 	if (wrote >= sizeof rsync) {
