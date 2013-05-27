@@ -94,7 +94,7 @@ umask 0000
 
     echo -n "TRACHOOK"
     date
-    /svn/Twisted/hooks/trac-post-commit-pb-client "${REV}" "${AUTHOR}" "${LOG}" cube.twistedmatrix.com 38159
+    /svn/Twisted/hooks/trac-post-commit-pb-client "${REV}" "${AUTHOR}" "${LOG}" twistedmatrix.com 38159
 
     echo -n "BUILDBOT"
     date

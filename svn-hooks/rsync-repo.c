@@ -39,7 +39,7 @@
 /**
  * The rsync destination location.
  */
-#define DEST      "trac-migration@twistedmatrix.com:svn"
+#define DEST      "trac@twistedmatrix.com:svn"
 
 /**
  * Could not format the first rsync command with the available buffer space.
