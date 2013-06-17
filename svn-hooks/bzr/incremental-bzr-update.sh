@@ -232,7 +232,7 @@ do
         then
             release_name=${branch_name##${RELEASE_FOLDER}}
             release_name=${release_name%%/*}
-            branch_name=${RELEASE_FOLDER}$branch_name
+            branch_name=${RELEASE_FOLDER}$release_name
         else
             branch_name=${branch_name%%/*}
         fi
