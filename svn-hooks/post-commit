@@ -36,6 +36,7 @@ REPOS="$1"
 REV="$2"
 LOG=`/usr/bin/svnlook log -r $REV $REPOS`
 AUTHOR=`/usr/bin/svnlook author -r $REV $REPOS`
+FILES=`/usr/bin/svnlook changed -r $REV $REPOS`
 
 
 LOCK_DIR=/var/lock/svn-hooks
@@ -98,7 +99,8 @@ umask 0000
 
     echo -n "BUILDBOT"
     date
-    /svn/Twisted/hooks/svn_buildbot.py --repository "${REPOS}" --revision "${REV}" --bbserver buildbot.twistedmatrix.com --bbport 9987
+    GIT_REVISION=$(git svn find-rev r${REV})
+    buildbot sendchange --master buildbot.twistedmatrix.com:9987 --revision "${REV}" --who "${AUTHOR}" --comments "${LOG}" --property git_revision:"${GIT_REVISION}" ${FILES}
 
 ) >> ~/.post-commit.log 2>&1 {SELF_REV}>$LOCK_DIR/$REV {PREV_REV}<$LOCK_DIR/$(($REV-1))
 
