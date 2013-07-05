@@ -41,6 +41,8 @@ FILES=`/usr/bin/svnlook changed -r $REV $REPOS`
 
 LOCK_DIR=/var/lock/svn-hooks
 
+GIT_MIRROR_DIRECTORY=/var/www/git/Twisted/
+
 if [ -e "${LOCK_DIR}" ];
 then
     echo "Lock dir exists."
@@ -75,7 +77,7 @@ umask 0000
 
     echo -n "GIT"
     date
-    sudo -u gitmirror /usr/bin/env -i /var/www/git/Twisted/fetch
+    sudo -u gitmirror /usr/bin/env -i "${GIT_MIRROR_DIRECTORY}"/fetch
 
     echo -n "BZR"
     date
@@ -99,7 +101,7 @@ umask 0000
 
     echo -n "BUILDBOT"
     date
-    GIT_REVISION=$(git svn find-rev r${REV})
+    GIT_REVISION=$(git --git-dir "${GIT_MIRROR_DIRECTORY}" svn find-rev r"${REV}")
     buildbot sendchange --master buildbot.twistedmatrix.com:9987 --revision "${REV}" --who "${AUTHOR}" --comments "${LOG}" --property git_revision:"${GIT_REVISION}" ${FILES}
 
 ) >> ~/.post-commit.log 2>&1 {SELF_REV}>$LOCK_DIR/$REV {PREV_REV}<$LOCK_DIR/$(($REV-1))
