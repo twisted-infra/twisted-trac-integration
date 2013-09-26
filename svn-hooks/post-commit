@@ -41,7 +41,7 @@ FILES=`/usr/bin/svnlook changed -r $REV $REPOS`
 
 LOCK_DIR=/var/lock/svn-hooks
 
-GIT_MIRROR_DIRECTORY=/var/www/git/Twisted
+GIT_MIRROR_DIRECTORY=/git/Twisted/
 
 if [ -e "${LOCK_DIR}" ];
 then

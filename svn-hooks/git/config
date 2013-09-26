@@ -20,6 +20,7 @@
 	push = refs/svn/*:refs/mirror/*
 [remote "mirror"]
 	url = git@github.com:twisted/twisted.git
+	url = /var/www/git/Twisted
 	push = refs/mirror/*:refs/heads/*
 	push = refs/heads/trunk
 	push = refs/tags/*
