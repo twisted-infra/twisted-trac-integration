@@ -108,7 +108,7 @@ class MainTests(TestCase, SubversionMixin):
         the only changed file is </trunk/doc/fun/Twisted.Quotes>.
         """
         # First get Twisted.Quotes into the repository at all.
-        doc = self.trunk.child("doc")
+        doc = self.trunk.child("docs")
         fun = doc.child("fun")
         fun.makedirs()
         quotes = fun.child("Twisted.Quotes")

@@ -99,7 +99,7 @@ def main():
         if not (fixes or reopens):
             # If it doesn't change a ticket state, then it is only allowed to
             # change the Quotes file
-            allowed = [Change(["trunk", "doc", "fun", "Twisted.Quotes"])]
+            allowed = [Change(["trunk", "docs", "fun", "Twisted.Quotes"])]
             if list(iterchanges(changed)) != allowed:
                 raise SystemExit(
                     "Must either close or re-open a ticket with trunk commits.")
