@@ -5,8 +5,8 @@ import psycopg2
 
 from twisted.python.filepath import FilePath
 
-DB = "host=localhost user=trac-migration dbname=trac"
-PASSWD = FilePath(expanduser("~/Run/trac/htpasswd"))
+DB = "dbname=trac"
+PASSWD = FilePath(expanduser("~/config/htpasswd"))
 
 def loadUsernames(conn, queries):
     curs = conn.cursor()
