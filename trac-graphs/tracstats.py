@@ -61,10 +61,10 @@ def changes(cursor, start, end):
     statement = ("select time, ticket, field, oldvalue, newvalue, author "
                  "from ticket_change "
                  "where field = 'status' and (time > %(start)d and time < %(end)d) "
-                 "order by time asc") % {'start': time.mktime(start.utctimetuple()),
-                                         'end': time.mktime(end.utctimetuple())}
+                 "order by time asc") % {'start': 1000000 * time.mktime(start.utctimetuple()),
+                                         'end': 1000000 * time.mktime(end.utctimetuple())}
     cursor.execute(statement)
-    return [udict(time=datetime.datetime.fromtimestamp(row[0]), ticket=row[1],
+    return [udict(time=datetime.datetime.fromtimestamp(row[0] / 1000000.0), ticket=row[1],
                   field=row[2], old=row[3], new=row[4], author=row[5])
             for row
             in cursor.fetchall()]
@@ -80,7 +80,7 @@ def comments(cursor):
                  "where field = 'comment' "
                  "order by time asc")
     cursor.execute(statement)
-    return [udict(time=datetime.datetime.fromtimestamp(row[0]), ticket=row[1],
+    return [udict(time=datetime.datetime.fromtimestamp(row[0] / 1000000), ticket=row[1],
                   field=row[2], old=row[3], new=row[4], author=row[5])
             for row
             in cursor.fetchall()]
