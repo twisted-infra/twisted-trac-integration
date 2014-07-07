@@ -25,7 +25,7 @@ def allChanges(cursor, id):
                  "order by time asc")
     cursor.execute(statement, (id,))
     return [
-        udict(time=datetime.datetime.fromtimestamp(row[0]),
+        udict(time=datetime.datetime.fromtimestamp(row[0] / 1000000.0),
               author=row[1],
               field=row[2],
               old=row[3],
@@ -43,7 +43,7 @@ def tickets(cursor):
                  "order by time asc")
     cursor.execute(statement)
     return dict([
-        (row[1], udict(time=datetime.datetime.fromtimestamp(row[0]),
+        (row[1], udict(time=datetime.datetime.fromtimestamp(row[0] / 1000000.0),
                        id=row[1], type=row[2], component=row[3],
                        summary=row[4], status=row[5], priority=row[6],
                        resolution=row[7], reporter=row[8],
