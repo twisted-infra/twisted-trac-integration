@@ -114,7 +114,6 @@ def timeTicketOpen(ticket):
         if change[u'field'] == u'status' and change[u'new'] == u'closed':
             closed = change[u'time']
     if closed is None:
-        log('Sucky ticket:', ticket[u'id'])
         if ticket[u'changes']:
             closed = ticket[u'changes'][-1][u'time']
         else:
@@ -175,12 +174,14 @@ def describeAverageReviewPeriod(tickets):
         lastReviewStart = tkt[u'time']
         for ch in tkt[u'changes']:
             if ch[u'field'] == u'keywords':
-                if u'review' in ch[u'old'] and u'review' not in ch[u'new']:
+                oldkw = (ch[u'old'] or u'')
+                newkw = (ch[u'new'] or u'')
+                if u'review' in oldkw and u'review' not in newkw:
                     # It got reviewed
                     reviewTime += ch[u'time'] - lastReviewStart
                     lastReviewStart = None
                     numReviews += 1
-                if u'review' in ch[u'new'] and u'review' not in ch[u'old']:
+                if u'review' in newkw and u'review' not in oldkw:
                     # It is up for review now
                     lastReviewStart = ch[u'time']
                     changed = True
@@ -245,8 +246,10 @@ def describeOverallContributors(tickets):
     for tkt in tickets.values():
         add(created, tkt[u'reporter'], tkt[u'time'])
         for ch in tkt[u'changes']:
+            oldkw = ch[u'old'] or u''
+            newkw = ch[u'new'] or u''
             if ch[u'field'] == u'keywords':
-                if u'review' in ch[u'old'] and u'review' not in ch[u'new']:
+                if u'review' in oldkw and u'review' not in newkw:
                     # It was reviewed, this person is a reviewer.
                     add(reviewed, ch[u'author'], ch[u'time'])
             if ch[u'field'] == u'resolution':
@@ -406,30 +409,36 @@ def summarize(start, end, tickets, changes):
 
     totalOpenRegressionCount = len([
             t for t in tickets.itervalues() 
-            if t[u'status'] != u'closed' and t[u'type'] == u'regression'])
+            if t[u'status'] != u'closed' and t[u'type'] == u'release blocker: regression'])
 
     enhancementsOpened = []
     defectsOpened = []
     tasksOpened = []
     regressionsOpened = []
+    releaseOpened = []
 
     openedByType = {
         'enhancement': enhancementsOpened,
         'defect': defectsOpened,
         'task': tasksOpened,
-        'regression': regressionsOpened,
+        'release blocker: regression': regressionsOpened,
+        'release blocker: wrong release notes': releaseOpened,
+        'release blocker: release process bug': releaseOpened,
         }
 
     enhancementsClosed = []
     defectsClosed = []
     tasksClosed = []
     regressionsClosed = []
+    releaseClosed = []
     
     closedByType = {
         'enhancement': enhancementsClosed,
         'defect': defectsClosed,
         'task': tasksClosed,
-        'regression': regressionsClosed,
+        'release blocker: regression': regressionsClosed,
+        'release blocker: wrong release notes': releaseClosed,
+        'release blocker: release process bug': releaseClosed,
         }
 
     bugsClosed = []
