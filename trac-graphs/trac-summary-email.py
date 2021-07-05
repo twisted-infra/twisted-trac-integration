@@ -610,6 +610,9 @@ def juxtapose(*groups):
     >>> juxtapose(priorityGroup, typeGroup, componentGroup)
     u'|== Priority Changes   |== Type Changes   |== Component Changes   \n|Lowest:   +1          |Defect:  +3       |None                   \n|Highest:  -1          |Task:   -10                               \n'
 
+    >>> juxtapose(formatChange(u"A", []), formatChange(u"B", []), formatChange(u"C", []))
+    u'|== A Changes   |== B Changes   |== C Changes   \n|None           |None           |None           \n'
+
     """
     summary = []
     widths = [max(map(len, g)) for g in groups if g]
