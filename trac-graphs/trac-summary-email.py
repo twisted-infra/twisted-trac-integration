@@ -584,6 +584,10 @@ def formatChange(kind, info):
     """
     >>> formatChange(u"Priority", [("lowest", 1), ("highest", -1)])
     [u'== Priority changes ', u'lowest:   +1', u'highest:  -1']
+    >>> formatChange(u"Type", [(u"defect", 3), (u"task", -10)])
+    [u'== Type changes ', u'defect:  +3', u'task:   -10']
+    >>> formatChange(u"Empty", [])
+    ''
     """
     if not info:
         return ''
@@ -595,6 +599,17 @@ def formatChange(kind, info):
 
 
 def juxtapose(*groups):
+    r"""
+    >>> priorityGroup = [u'== Priority changes ', u'lowest:   +1', u'highest:  -1']
+    >>> typeGroup = [u'== Type changes ', u'defect:  +3', u'task:   -10']
+    >>> juxtapose(priorityGroup, typeGroup)
+    u'|== Priority Changes   |== Type Changes   \n|Lowest:   +1          |Defect:  +3       \n|Highest:  -1          |Task:   -10       \n'
+
+    >>> emptyGroup = ''
+    >>> juxtapose(priorityGroup, typeGroup, emptyGroup)
+    u'|== Priority Changes   |== Type Changes   \n|Lowest:   +1          |Defect:  +3       \n|Highest:  -1          |Task:   -10       \n'
+
+    """
     summary = []
     widths = [max(map(len, g)) for g in groups]
     for lines in map(None, *groups):
