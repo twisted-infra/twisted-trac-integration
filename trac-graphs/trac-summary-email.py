@@ -1,12 +1,16 @@
 
-import tempfile, cgi
-import sys, time, datetime, random, StringIO
-import email.Message, email.Generator, email.Utils
+import cgi
+import datetime
+import email.Generator
+import email.Message
+import email.Utils
+import random
+import sys
+import tempfile
+import time
 
 import psycopg2.extensions
-
-import gdchart
-
+import StringIO
 import tracstats
 
 
@@ -334,6 +338,10 @@ def historicTicketCountsGraph(tickets, howMany=52 * 5):
     Return png data for an image of a bar graph giving open tickets by week for
     the given number of historic weeks.
     """
+    # Local import for ease of testing the rest of this file because this
+    # library isn't easily installable from PyPI.
+    import gdchart
+
     dates = periods(howMany)
     totalCounts = []
     openCounts = []
@@ -573,18 +581,41 @@ ______________________
 link = u"https://twistedmatrix.com/trac/ticket/%(id)d"
 
 def formatChange(kind, info):
-    if not info:
-        return ''
-    width = max([len(item[0]) for item in info]) + 3
+    """
+    >>> formatChange(u"Priority", [("lowest", 1), ("highest", -1)])
+    [u'== Priority changes ', u'lowest:   +1', u'highest:  -1']
+    >>> formatChange(u"Type", [(u"defect", 3), (u"task", -10)])
+    [u'== Type changes ', u'defect:  +3', u'task:   -10']
+    >>> formatChange(u"Empty", [])
+    [u'== Empty changes ', u'none']
+    """
     summary = [u'== %s changes ' % (kind,)]
-    summary.extend([
-        u'%s: %*s' % (k, width - len(k), formatCount(v)) for (k, v) in info])
+    if info:
+        width = max([len(item[0]) for item in info]) + 3
+        summary.extend([
+            u'%s: %*s' % (k, width - len(k), formatCount(v)) for (k, v) in info])
+    else:
+        summary.append(u'none')
     return summary
 
 
 def juxtapose(*groups):
+    r"""
+    >>> priorityGroup = [u'== Priority changes ', u'lowest:   +1', u'highest:  -1']
+    >>> typeGroup = [u'== Type changes ', u'defect:  +3', u'task:   -10']
+    >>> juxtapose(priorityGroup, typeGroup)
+    u'|== Priority Changes   |== Type Changes   \n|Lowest:   +1          |Defect:  +3       \n|Highest:  -1          |Task:   -10       \n'
+
+    >>> componentGroup = [u"== Component changes ", u'none']
+    >>> juxtapose(priorityGroup, typeGroup, componentGroup)
+    u'|== Priority Changes   |== Type Changes   |== Component Changes   \n|Lowest:   +1          |Defect:  +3       |None                   \n|Highest:  -1          |Task:   -10                               \n'
+
+    >>> juxtapose(formatChange(u"A", []), formatChange(u"B", []), formatChange(u"C", []))
+    u'|== A Changes   |== B Changes   |== C Changes   \n|None           |None           |None           \n'
+
+    """
     summary = []
-    widths = [max(map(len, g)) for g in groups]
+    widths = [max(map(len, g)) for g in groups if g]
     for lines in map(None, *groups):
         summary.append(''.join([u'%-*s' % (w + 3, (l and u'|' + l.title() or u'')) for (w, l) in zip(widths, lines)]))
     return u'\n'.join(summary) + u'\n'
@@ -611,7 +642,7 @@ def formatTickets(tickets, fmt):
     if tickets:
         ticketWidth = max(len(str(t[u'id'])) for t in tickets)
     else:
-        ticketWidget = 6
+        ticketWidth = 6
     lastPriority = None
     seen = {}
     for tkt in sorted(tickets, key=lambda t: PRIORITY_ORDER.index(t[u'priority'])):
@@ -743,7 +774,10 @@ def main(db, from_, to, start=None, end=None):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 4:
+    if "--test" in sys.argv:
+        import doctest
+        doctest.testmod()
+    elif len(sys.argv) == 4:
         main(sys.argv[1], sys.argv[2], sys.argv[3])
     elif len(sys.argv) == 6:
         main(sys.argv[1], sys.argv[2], sys.argv[3], datetime.datetime(*map(int, sys.argv[4].split('-'))), datetime.datetime(*map(int, sys.argv[5].split('-'))))
