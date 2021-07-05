@@ -611,7 +611,7 @@ def formatTickets(tickets, fmt):
     if tickets:
         ticketWidth = max(len(str(t[u'id'])) for t in tickets)
     else:
-        ticketWidget = 6
+        ticketWidth = 6
     lastPriority = None
     seen = {}
     for tkt in sorted(tickets, key=lambda t: PRIORITY_ORDER.index(t[u'priority'])):
