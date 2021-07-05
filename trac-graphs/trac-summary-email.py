@@ -587,14 +587,15 @@ def formatChange(kind, info):
     >>> formatChange(u"Type", [(u"defect", 3), (u"task", -10)])
     [u'== Type changes ', u'defect:  +3', u'task:   -10']
     >>> formatChange(u"Empty", [])
-    ''
+    [u'== Empty changes ', u'none']
     """
-    if not info:
-        return ''
-    width = max([len(item[0]) for item in info]) + 3
     summary = [u'== %s changes ' % (kind,)]
-    summary.extend([
-        u'%s: %*s' % (k, width - len(k), formatCount(v)) for (k, v) in info])
+    if info:
+        width = max([len(item[0]) for item in info]) + 3
+        summary.extend([
+            u'%s: %*s' % (k, width - len(k), formatCount(v)) for (k, v) in info])
+    else:
+        summary.append(u'none')
     return summary
 
 
@@ -605,13 +606,13 @@ def juxtapose(*groups):
     >>> juxtapose(priorityGroup, typeGroup)
     u'|== Priority Changes   |== Type Changes   \n|Lowest:   +1          |Defect:  +3       \n|Highest:  -1          |Task:   -10       \n'
 
-    >>> emptyGroup = ''
+    >>> emptyGroup = [u"== Empty changes ", u'none']
     >>> juxtapose(priorityGroup, typeGroup, emptyGroup)
-    u'|== Priority Changes   |== Type Changes   \n|Lowest:   +1          |Defect:  +3       \n|Highest:  -1          |Task:   -10       \n'
+    u'|== Priority Changes   |== Type Changes   |== Empty Changes   \n|Lowest:   +1          |Defect:  +3       |None               \n|Highest:  -1          |Task:   -10                           \n'
 
     """
     summary = []
-    widths = [max(map(len, g)) for g in groups]
+    widths = [max(map(len, g)) for g in groups if g]
     for lines in map(None, *groups):
         summary.append(''.join([u'%-*s' % (w + 3, (l and u'|' + l.title() or u'')) for (w, l) in zip(widths, lines)]))
     return u'\n'.join(summary) + u'\n'
