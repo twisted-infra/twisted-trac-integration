@@ -396,19 +396,19 @@ def summarize(start, end, tickets, changes):
     totalOpenBugCount = len([t for t in tickets.itervalues() if t[u'status'] != u'closed'])
 
     totalOpenEnhancementCount = len([
-            t for t in tickets.itervalues() 
+            t for t in tickets.itervalues()
             if t[u'status'] != u'closed' and t[u'type'] == u'enhancement'])
 
     totalOpenDefectCount = len([
-            t for t in tickets.itervalues() 
+            t for t in tickets.itervalues()
             if t[u'status'] != u'closed' and t[u'type'] == u'defect'])
 
     totalOpenTaskCount = len([
-            t for t in tickets.itervalues() 
+            t for t in tickets.itervalues()
             if t[u'status'] != u'closed' and t[u'type'] == u'task'])
 
     totalOpenRegressionCount = len([
-            t for t in tickets.itervalues() 
+            t for t in tickets.itervalues()
             if t[u'status'] != u'closed' and t[u'type'] == u'release blocker: regression'])
 
     enhancementsOpened = []
@@ -431,7 +431,7 @@ def summarize(start, end, tickets, changes):
     tasksClosed = []
     regressionsClosed = []
     releaseClosed = []
-    
+
     closedByType = {
         'enhancement': enhancementsClosed,
         'defect': defectsClosed,
@@ -570,7 +570,7 @@ ______________________
 </html>
 """
 
-link = u"http://twistedmatrix.com/trac/ticket/%(id)d"
+link = u"https://twistedmatrix.com/trac/ticket/%(id)d"
 
 def formatChange(kind, info):
     if not info:
