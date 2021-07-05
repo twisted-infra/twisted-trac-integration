@@ -1,12 +1,16 @@
 
-import tempfile, cgi
-import sys, time, datetime, random, StringIO
-import email.Message, email.Generator, email.Utils
+import cgi
+import datetime
+import email.Generator
+import email.Message
+import email.Utils
+import random
+import sys
+import tempfile
+import time
 
 import psycopg2.extensions
-
-import gdchart
-
+import StringIO
 import tracstats
 
 
@@ -334,6 +338,10 @@ def historicTicketCountsGraph(tickets, howMany=52 * 5):
     Return png data for an image of a bar graph giving open tickets by week for
     the given number of historic weeks.
     """
+    # Local import for ease of testing the rest of this file because this
+    # library isn't easily installable from PyPI.
+    import gdchart
+
     dates = periods(howMany)
     totalCounts = []
     openCounts = []
@@ -573,6 +581,10 @@ ______________________
 link = u"http://twistedmatrix.com/trac/ticket/%(id)d"
 
 def formatChange(kind, info):
+    """
+    >>> formatChange(u"Priority", [("lowest", 1), ("highest", -1)])
+    [u'== Priority changes ', u'lowest:   +1', u'highest:  -1']
+    """
     if not info:
         return ''
     width = max([len(item[0]) for item in info]) + 3
@@ -743,7 +755,10 @@ def main(db, from_, to, start=None, end=None):
 
 
 if __name__ == '__main__':
-    if len(sys.argv) == 4:
+    if "--test" in sys.argv:
+        import doctest
+        doctest.testmod()
+    elif len(sys.argv) == 4:
         main(sys.argv[1], sys.argv[2], sys.argv[3])
     elif len(sys.argv) == 6:
         main(sys.argv[1], sys.argv[2], sys.argv[3], datetime.datetime(*map(int, sys.argv[4].split('-'))), datetime.datetime(*map(int, sys.argv[5].split('-'))))
