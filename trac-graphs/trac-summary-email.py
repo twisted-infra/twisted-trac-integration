@@ -606,9 +606,9 @@ def juxtapose(*groups):
     >>> juxtapose(priorityGroup, typeGroup)
     u'|== Priority Changes   |== Type Changes   \n|Lowest:   +1          |Defect:  +3       \n|Highest:  -1          |Task:   -10       \n'
 
-    >>> emptyGroup = [u"== Empty changes ", u'none']
-    >>> juxtapose(priorityGroup, typeGroup, emptyGroup)
-    u'|== Priority Changes   |== Type Changes   |== Empty Changes   \n|Lowest:   +1          |Defect:  +3       |None               \n|Highest:  -1          |Task:   -10                           \n'
+    >>> componentGroup = [u"== Component changes ", u'none']
+    >>> juxtapose(priorityGroup, typeGroup, componentGroup)
+    u'|== Priority Changes   |== Type Changes   |== Component Changes   \n|Lowest:   +1          |Defect:  +3       |None                   \n|Highest:  -1          |Task:   -10                               \n'
 
     """
     summary = []
